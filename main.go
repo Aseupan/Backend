@@ -25,15 +25,20 @@ func main() {
 	r := gin.Default()
 	Handlers.Init()
 	r.Use(Middleware.CORS())
-	r.GET("/", Handlers.HandleMain)
-	r.GET("/login", Handlers.HandleGoogleLogin)
-	r.GET("/callback", Handlers.HandleGoogleCallback)
-	r.GET("/status", Handlers.HandleStatus)
-	r.GET("/TLI", Handlers.HandleTestLoggedIn)
-	r.GET("/logout", Handlers.HandleLogout)
+	// r.GET("/", Handlers.HandleMain)
+	// r.GET("/login", Handlers.HandleGoogleLogin)
+	// r.GET("/callback", Handlers.HandleGoogleCallback)
+	// r.GET("/status", Handlers.HandleStatus)
+	// r.GET("/TLI", Handlers.HandleTestLoggedIn)
+	// r.GET("/logout", Handlers.HandleLogout)
+
+	// new
 
 	r.Group("/api")
+	// Handlers.Register(db, r)
+	Handlers.Login(db, r)
 	Handlers.Register(db, r)
+	Handlers.Profile(db, r)
 
 	err := r.Run(":8080")
 	if err != nil {

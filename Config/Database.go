@@ -2,41 +2,32 @@ package Config
 
 import (
 	"fmt"
-	entities "gsc/Entities"
-	"log"
+	"gsc/Entities"
 	"os"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func Connect() *gorm.DB {
-	var db *gorm.DB
-	var err error
-
-	db, err = gorm.Open(
-		mysql.Open(
-			fmt.Sprintf(
-				"%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True",
-				os.Getenv("DB_USER"),
-				os.Getenv("DB_PASS"),
-				os.Getenv("DB_HOST"),
-				os.Getenv("DB_NAME"),
-			),
+	db, err := gorm.Open(postgres.Open(
+		fmt.Sprintf(
+			"user=%s password=%s host=%s TimeZone=%s port=%s dbname=%s",
+			os.Getenv("SB_User"),
+			os.Getenv("SB_Password"),
+			os.Getenv("SB_Host"),
+			os.Getenv("SB_TimeZone"),
+			os.Getenv("SB_Port"),
+			os.Getenv("SB_DB"),
 		),
-		&gorm.Config{})
+	), &gorm.Config{})
+
 	if err != nil {
-		log.Fatal(err.Error())
+		return nil
 	}
 
-	if err = db.AutoMigrate(
-		// &Model.Admin{},
-		// &Model.Class{},
-		// &Model.Course{},
-		// &Model.Student{},
-		&entities.User{},
-	); err != nil {
-		log.Fatal(err.Error())
+	if err := db.AutoMigrate(&Entities.User{}); err != nil {
+		return nil
 	}
 
 	return db
