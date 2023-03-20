@@ -19,32 +19,32 @@ func main() {
 	}
 
 	// supabase
-	// databaseConf, err := config.NewDatabase()
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// db, err := config.MakeSupaBaseConnectionDatabase(databaseConf)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	// log.Println(db)
-
-	// localhost
-	databaseConf, err := config.NewDBLocal()
+	databaseConf, err := config.NewDatabase()
 	if err != nil {
 		panic(err.Error())
 	}
-	db, err := config.MakeLocalhostConnectionDatabase(databaseConf)
+	db, err := config.MakeSupaBaseConnectionDatabase(databaseConf)
 	if err != nil {
 		panic(err.Error())
 	}
 	log.Println(db)
 
+	// localhost
+	// databaseConf, err := config.NewDBLocal()
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// db, err := config.MakeLocalhostConnectionDatabase(databaseConf)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// log.Println(db)
+
 	r := gin.Default()
 
 	// cors
 	r.Use(middleware.CORS())
-	controller.Init()
+	// controller.Init()
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -63,6 +63,7 @@ func main() {
 	controller.Login(db, r)
 	controller.ResetPassword(db, r)
 	controller.UserProfile(db, r)
+	controller.UserHome(db, r)
 
 	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		panic(err.Error())

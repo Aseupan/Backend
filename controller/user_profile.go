@@ -4,11 +4,11 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -54,26 +54,30 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		var maxIndex int
-		err := db.Model(&model.Address{}).Select("MAX(`index`)").Where("user_id = ?", ID).Scan(&maxIndex).Error
-		if err != nil {
-			log.Printf("error max index: %v", maxIndex)
-			maxIndex = 0
-		}
-
 		var primaryAddress bool
-		if maxIndex == 0 {
-			primaryAddress = true
+
+		var address model.Address
+		err := db.Where("user_id = ? AND primary_address = ?", ID, true).First(&address).Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				// No rows with primary_address = true for the given user_id
+				primaryAddress = true
+			} else {
+				// basic error
+				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			}
 		} else {
+			// There is a primary address for the given user_id
 			primaryAddress = false
 		}
 
 		newAddres := model.Address{
-			UserID:          ID.(uint),
+			UserID:          ID.(uuid.UUID),
 			Name:            input.Name,
 			Phone:           input.Phone,
 			Address:         input.Address,
 			City:            input.City,
+			State:           input.State,
 			Disctrict:       input.Disctrict,
 			ZipCode:         input.ZipCode,
 			DetailedAddress: input.DetailedAddress,
@@ -112,6 +116,7 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 			Address:         input.Address,
 			City:            input.City,
 			Disctrict:       input.Disctrict,
+			State:           input.State,
 			ZipCode:         input.ZipCode,
 			DetailedAddress: input.DetailedAddress,
 			PrimaryAddress:  input.PrimaryAddress,

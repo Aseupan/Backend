@@ -29,7 +29,7 @@ func IsEmailValid(email string) bool {
 	}
 
 	err = EmailValidateDomain(email)
-	if err != nil {
+	if err == nil {
 		return false
 	}
 

@@ -27,6 +27,7 @@ func MakeSupaBaseConnectionDatabase(data *Database) (*gorm.DB, error) {
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Address{},
+		&model.Company{},
 	); err != nil {
 		return nil, err
 	}

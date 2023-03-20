@@ -4,7 +4,6 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -103,8 +102,7 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if utils.CompareHash(login.Password, input.Password) {
-			log.Println("fungsi utils baru bekerja")
+		if utils.CompareHash(input.Password, login.Password) {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 				"id":  login.ID,
 				"exp": time.Now().Add(time.Hour).Unix(),

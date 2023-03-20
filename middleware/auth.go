@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 func Authorization() gin.HandlerFunc {
@@ -23,7 +24,13 @@ func Authorization() gin.HandlerFunc {
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			c.Set("id", uint(claims["id"].(float64)))
+			idStr := claims["id"].(string)
+			id, err := uuid.Parse(idStr)
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				c.Abort()
+			}
+			c.Set("id", id)
 			c.Next()
 			return
 		} else {
