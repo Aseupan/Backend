@@ -131,7 +131,29 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 		utils.HttpRespSuccess(c, http.StatusOK, "Address updated", updatedAddres)
 	})
 
-	// delete one of user addresses by id
+	r.PATCH("/address/:id/primary", middleware.Authorization(), func(c *gin.Context) {
+		addressID := c.Param("id")
+
+		var address model.Address
+		if err := db.Where("id = ?", addressID).First(&address).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		address.PrimaryAddress = true
+		if err := db.Save(&address).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		if err := db.Model(&model.Address{}).Where("user_id = ?", address.UserID).Where("id != ?", address.ID).Update("primary_address", false).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Address updated", address)
+	})
+
 	r.DELETE("/address/:id", middleware.Authorization(), func(c *gin.Context) {
 		addressID := c.Param("id")
 
