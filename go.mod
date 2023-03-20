@@ -6,6 +6,7 @@ require gorm.io/driver/postgres v1.5.0
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.0 // indirect
+	github.com/badoux/checkmail v1.2.1 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect

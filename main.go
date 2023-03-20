@@ -47,9 +47,10 @@ func main() {
 	// r.GET("/status", controller.HandleStatus)
 	// r.GET("/TLI", controller.HandleTestLoggedIn)
 	// r.GET("/logout", controller.HandleLogout)
-	controller.Register(db, r)
+	controller.UserRegister(db, r)
 	controller.Login(db, r)
 	controller.ResetPassword(db, r)
+	controller.UserProfile(db, r)
 
 	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		panic(err.Error())

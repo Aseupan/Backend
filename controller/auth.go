@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Register(db *gorm.DB, q *gin.Engine) {
+func UserRegister(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 	r.POST("/register", func(c *gin.Context) {
 		var input model.UserRegisterInput
@@ -28,6 +28,11 @@ func Register(db *gorm.DB, q *gin.Engine) {
 		if input.Password != input.ConfirmPassword {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Password and confirm password does not match")
 			return
+		}
+
+		// check if the email is valid or not
+		if !utils.IsEmailValid(input.Email) {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
 		}
 
 		newUser := model.User{
@@ -89,7 +94,7 @@ func Login(db *gorm.DB, q *gin.Engine) {
 }
 
 func ResetPassword(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api")
+	r := q.Group("/api/user")
 	// reset password via email
 	r.POST("/reset-password", middleware.Authorization(), func(c *gin.Context) {
 		var input model.UserResetPasswordInput
