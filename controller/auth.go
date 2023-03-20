@@ -18,7 +18,7 @@ import (
 
 func UserRegister(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
-	r.POST("/register", func(c *gin.Context) {
+	r.POST("/user-register", func(c *gin.Context) {
 		var input model.UserRegisterInput
 		if err := c.BindJSON(&input); err != nil {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
@@ -30,9 +30,9 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// check if the email is valid or not
 		if !utils.IsEmailValid(input.Email) {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
+			return
 		}
 
 		newUser := model.User{
@@ -49,6 +49,41 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 		}
 
 		utils.HttpRespSuccess(c, http.StatusCreated, "Account created", input)
+	})
+}
+
+func CompanyRegister(db *gorm.DB, q *gin.Engine) {
+	r := q.Group("/api")
+	r.POST("/company-register", func(c *gin.Context) {
+		var input model.CompanyRegisterInput
+		if err := c.BindJSON(&input); err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		if input.Password != input.ConfirmPassword {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Password and confirm password does not match")
+			return
+		}
+
+		if !utils.IsEmailValid(input.CompanyEmail) {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
+			return
+		}
+
+		newCompany := model.Company{
+			ID:             uuid.New(),
+			CompanyName:    input.CompanyName,
+			CompanyAddress: input.CompanyAddress,
+			CompanyEmail:   input.CompanyEmail,
+			Password:       utils.Hash(input.Password),
+			CreatedAt:      time.Now(),
+		}
+
+		if err := db.Create(&newCompany).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 	})
 }
 

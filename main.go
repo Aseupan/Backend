@@ -47,6 +47,7 @@ func main() {
 	// r.GET("/status", controller.HandleStatus)
 	// r.GET("/TLI", controller.HandleTestLoggedIn)
 	// r.GET("/logout", controller.HandleLogout)
+	controller.CompanyRegister(db, r)
 	controller.UserRegister(db, r)
 	controller.Login(db, r)
 	controller.ResetPassword(db, r)
