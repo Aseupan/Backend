@@ -2,23 +2,21 @@ package model
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Address struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	User            User      `gorm:"ForeignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	UserID          uuid.UUID `json:"user_id"`
-	Name            string    `json:"name"`
-	Phone           string    `json:"phone"`
-	Address         string    `json:"address"`
-	State           string    `json:"state"`
-	City            string    `json:"city"`
-	Disctrict       string    `json:"disctrict"`
-	ZipCode         string    `json:"zip_code"`
-	DetailedAddress string    `json:"detailed_address"`
-	PrimaryAddress  bool      `json:"primary_address"`
+	ID              uint   `gorm:"primaryKey" json:"id"`
+	User            User   `gorm:"ForeignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	UserID          uint   `json:"user_id"`
+	Name            string `json:"name"`
+	Phone           string `json:"phone"`
+	Address         string `json:"address"`
+	State           string `json:"state"`
+	City            string `json:"city"`
+	Disctrict       string `json:"disctrict"`
+	ZipCode         string `json:"zip_code"`
+	DetailedAddress string `json:"detailed_address"`
+	PrimaryAddress  bool   `json:"primary_address"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

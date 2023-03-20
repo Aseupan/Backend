@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -70,7 +69,7 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 		}
 
 		newAddres := model.Address{
-			UserID:          ID.(uuid.UUID),
+			UserID:          ID.(uint),
 			Name:            input.Name,
 			Phone:           input.Phone,
 			Address:         input.Address,
@@ -90,7 +89,7 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 		utils.HttpRespSuccess(c, http.StatusOK, "New address added", newAddres)
 	})
 
-	// edit one of user addresses by index
+	// edit one of user addresses by id
 	r.PATCH("/address/:id", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 		addressID := c.Param("id")
@@ -125,5 +124,23 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Address updated", updatedAddres)
+	})
+
+	// delete one of user addresses by id
+	r.DELETE("/address/:id", middleware.Authorization(), func(c *gin.Context) {
+		addressID := c.Param("id")
+
+		var address model.Address
+		if err := db.Where("id = ?", addressID).First(&address).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		if err := db.Where("id = ?", addressID).Delete(&address).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Address deleted", nil)
 	})
 }

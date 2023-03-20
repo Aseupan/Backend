@@ -50,6 +50,8 @@ func MakeLocalhostConnectionDatabase(data *DBLocal) (*gorm.DB, error) {
 
 	if err := db.AutoMigrate(
 		&model.User{},
+		&model.Address{},
+		&model.Company{},
 	); err != nil {
 		log.Println(err.Error())
 	}

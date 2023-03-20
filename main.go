@@ -19,16 +19,27 @@ func main() {
 	}
 
 	// supabase
-	databaseConf, err := config.NewDatabase()
-	if err != nil {
-		panic(err.Error())
-	}
-	db, err := config.MakeSupaBaseConnectionDatabase(databaseConf)
-	if err != nil {
-		panic(err.Error())
-	}
+	// databaseConf, err := config.NewDatabase()
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// db, err := config.MakeSupaBaseConnectionDatabase(databaseConf)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// log.Println(db)
 
+	// localhost
+	databaseConf, err := config.NewDBLocal()
+	if err != nil {
+		panic(err.Error())
+	}
+	db, err := config.MakeLocalhostConnectionDatabase(databaseConf)
+	if err != nil {
+		panic(err.Error())
+	}
 	log.Println(db)
+
 	r := gin.Default()
 
 	// cors

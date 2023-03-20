@@ -13,7 +13,7 @@ type User struct {
 	Email          string    `gorm:"unique" json:"email"`
 	Password       string    `json:"password"`
 	ProfilePicture string    `json:"profile_picture"`
-	Chip           int       `json:"chip"`
+	Point          int       `json:"point"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
