@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"gsc/utils"
+	"log"
 	"net/http"
 	"os"
 
@@ -19,6 +20,7 @@ func Authorization() gin.HandlerFunc {
 			return []byte(os.Getenv("TOKEN")), nil
 		})
 		if err != nil {
+			log.Println("pas bagian ngambil token error")
 			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
 			c.Abort()
 			return
@@ -27,6 +29,7 @@ func Authorization() gin.HandlerFunc {
 			idStr := claims["id"].(string)
 			id, err := uuid.Parse(idStr)
 			if err != nil {
+				log.Println("pas bagian ngambil id error")
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
 				c.Abort()
 			}

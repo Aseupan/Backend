@@ -15,3 +15,4 @@
 # vendor/
 .env
 google-secret.json
+notes.txt

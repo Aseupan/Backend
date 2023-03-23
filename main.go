@@ -64,6 +64,7 @@ func main() {
 	controller.ResetPassword(db, r)
 	controller.UserProfile(db, r)
 	controller.UserHome(db, r)
+	controller.CreditStore(db, r)
 
 	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		panic(err.Error())
