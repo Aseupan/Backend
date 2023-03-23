@@ -29,10 +29,10 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if !utils.IsEmailValid(input.Email) {
-			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
-			return
-		}
+		// if !utils.IsEmailValid(input.Email) {
+		// 	utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
+		// 	return
+		// }
 
 		newUser := model.User{
 			ID:        uuid.New(),
