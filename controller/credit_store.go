@@ -222,7 +222,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed all", updated)
+			utils.HttpRespSuccess(c, http.StatusOK, "Removed", updated)
 			return
 		}
 
