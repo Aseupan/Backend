@@ -5,11 +5,16 @@ import (
 	"gsc/model"
 	"gsc/utils"
 	"log"
+	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/coreapi"
 	"gorm.io/gorm"
 )
 
@@ -256,5 +261,92 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Remove from cart", cart)
+	})
+
+	// payment gateway
+	r.GET("/payment", middleware.Authorization(), func(c *gin.Context) {
+
+		var total int
+		var totalPoints int
+
+		ID, _ := c.Get("id")
+		userID, ok := ID.(uuid.UUID)
+		if !ok {
+			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+			return
+		}
+
+		var user model.User
+		if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		var cart []model.CreditStoreWallet
+		if err := db.Where("user_id = ?", userID).Find(&cart).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		for _, v := range cart {
+			total += v.Price
+			totalPoints += v.Points
+		}
+
+		rand.Seed(time.Now().UnixNano())
+
+		midtransClient := coreapi.Client{}
+		midtransClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
+		orderID := utils.RandomOrderID()
+		req := &coreapi.ChargeReq{
+			PaymentType: "gopay",
+			TransactionDetails: midtrans.TransactionDetails{
+				OrderID:  orderID,
+				GrossAmt: int64(total),
+			},
+			Gopay: &coreapi.GopayDetails{
+				EnableCallback: true,
+				CallbackUrl:    "https://example.com/callback",
+			},
+			CustomerDetails: &midtrans.CustomerDetails{
+				FName: user.Name,
+				Email: user.Email,
+				Phone: user.Phone,
+			},
+		}
+
+		resp, err := midtransClient.ChargeTransaction(req)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
+
+		// update user credit
+		user.Point += totalPoints
+		if err := db.Save(&user).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		// delete cart
+		if err := db.Where("user_id = ?", userID).Delete(&cart).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		inputTransactionHistory := model.TransactionHistory{
+			UserID:    userID,
+			OrderID:   orderID,
+			Price:     total,
+			Points:    totalPoints,
+			CreatedAt: time.Now(),
+		}
+
+		if err := db.Create(&inputTransactionHistory).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			return
+		}
 	})
 }
