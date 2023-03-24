@@ -15,3 +15,7 @@ type CreditStoreWallet struct {
 type CreditStoreWalletInput struct {
 	ID int `json:"id"`
 }
+
+type CreditStorePaymentInput struct {
+	PaymentMethod int `json:"payment_method"`
+}

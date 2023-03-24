@@ -5,7 +5,6 @@ import (
 	"gsc/model"
 	"gsc/utils"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -264,7 +263,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// payment gateway
-	r.GET("/payment", middleware.Authorization(), func(c *gin.Context) {
+	r.POST("/payment", middleware.Authorization(), func(c *gin.Context) {
 
 		var total int
 		var totalPoints int
@@ -288,31 +287,72 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var items []midtrans.ItemDetails
+		for _, v := range cart {
+			item := midtrans.ItemDetails{
+				ID:           strconv.Itoa(v.Points),
+				Price:        int64(v.Price),
+				Qty:          int32(v.Quantity), // Assuming each item is purchased once
+				Name:         "Points",
+				Brand:        "aseupan",
+				Category:     "Chips",
+				MerchantName: "Midtrans",
+			}
+			items = append(items, item)
+		}
+
 		for _, v := range cart {
 			total += v.Price
 			totalPoints += v.Points
 		}
 
-		rand.Seed(time.Now().UnixNano())
+		var input model.CreditStorePaymentInput
+		if err := c.BindJSON(&input); err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
 
 		midtransClient := coreapi.Client{}
 		midtransClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
 		orderID := utils.RandomOrderID()
-		req := &coreapi.ChargeReq{
-			PaymentType: "gopay",
-			TransactionDetails: midtrans.TransactionDetails{
-				OrderID:  orderID,
-				GrossAmt: int64(total),
-			},
-			Gopay: &coreapi.GopayDetails{
-				EnableCallback: true,
-				CallbackUrl:    "https://example.com/callback",
-			},
-			CustomerDetails: &midtrans.CustomerDetails{
-				FName: user.Name,
-				Email: user.Email,
-				Phone: user.Phone,
-			},
+
+		req := &coreapi.ChargeReq{}
+
+		if input.PaymentMethod == 1 {
+			req = &coreapi.ChargeReq{
+				PaymentType: "gopay",
+				TransactionDetails: midtrans.TransactionDetails{
+					OrderID:  orderID,
+					GrossAmt: int64(total),
+				},
+				Gopay: &coreapi.GopayDetails{
+					EnableCallback: true,
+					CallbackUrl:    "https://example.com/callback",
+				},
+				CustomerDetails: &midtrans.CustomerDetails{
+					FName: user.Name,
+					Email: user.Email,
+					Phone: user.Phone,
+				},
+				Items: &items,
+			}
+		} else if input.PaymentMethod == 2 {
+			req = &coreapi.ChargeReq{
+				PaymentType: "shopeepay",
+				TransactionDetails: midtrans.TransactionDetails{
+					OrderID:  orderID,
+					GrossAmt: int64(total),
+				},
+				ShopeePay: &coreapi.ShopeePayDetails{
+					CallbackUrl: "https://example.com/callback",
+				},
+				CustomerDetails: &midtrans.CustomerDetails{
+					FName: user.Name,
+					Email: user.Email,
+					Phone: user.Phone,
+				},
+				Items: &items,
+			}
 		}
 
 		resp, err := midtransClient.ChargeTransaction(req)
