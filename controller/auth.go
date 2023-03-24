@@ -29,10 +29,10 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// if !utils.IsEmailValid(input.Email) {
-		// 	utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
-		// 	return
-		// }
+		if !utils.ValidateEmail(input.Email) {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
+			return
+		}
 
 		newUser := model.User{
 			ID:        uuid.New(),
@@ -65,7 +65,7 @@ func CompanyRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if !utils.IsEmailValid(input.CompanyEmail) {
+		if !utils.ValidateEmail(input.CompanyEmail) {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
 			return
 		}
