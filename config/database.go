@@ -29,7 +29,7 @@ func MakeSupaBaseConnectionDatabase(data *Database) (*gorm.DB, error) {
 		&model.Address{},
 		&model.Company{},
 		&model.CreditStore{},
-		&model.CreditStoreWallet{},
+		&model.CreditStoreCart{},
 		&model.TransactionHistory{},
 		&model.Rewards{},
 	); err != nil {
