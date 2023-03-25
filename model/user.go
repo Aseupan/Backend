@@ -30,6 +30,12 @@ type UserRegisterInput struct {
 	ConfirmPassword string `gorm:"binding:required" json:"confirm_password"`
 }
 
+type UserUpdateProfileInput struct {
+	ProfilePicture string `json:"profile_picture"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	Phone          string `json:"phone"` // defaultnya null saja
+}
 type UserResetPasswordInput struct {
 	Password string `gorm:"binding:required" json:"password"`
 }

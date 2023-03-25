@@ -120,10 +120,13 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			// utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
 		}
 
+		var accountType string
+
 		if user.ID != uuid.Nil && utils.CompareHash(input.Password, user.Password) {
+			accountType = "user"
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 				"id":   user.ID,
-				"type": "user",
+				"type": accountType,
 				"exp":  time.Now().Add(time.Hour).Unix(),
 			})
 
@@ -136,13 +139,14 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			utils.HttpRespSuccess(c, http.StatusOK, "Parsed token", gin.H{
 				"name":  user.Name,
 				"token": strToken,
-				"type":  "user",
+				"type":  accountType,
 			})
 
 		} else if company.ID != uuid.Nil && utils.CompareHash(input.Password, company.Password) {
+			accountType = "company"
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 				"id":   company.ID,
-				"type": "company",
+				"type": accountType,
 				"exp":  time.Now().Add(time.Hour).Unix(),
 			})
 
@@ -155,7 +159,7 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			utils.HttpRespSuccess(c, http.StatusOK, "Parsed token", gin.H{
 				"name":  company.CompanyName,
 				"token": strToken,
-				"type":  "company",
+				"type":  accountType,
 			})
 
 		} else {

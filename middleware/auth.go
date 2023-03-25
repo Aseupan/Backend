@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"gsc/utils"
-	"log"
 	"net/http"
 	"os"
 
@@ -20,20 +19,25 @@ func Authorization() gin.HandlerFunc {
 			return []byte(os.Getenv("TOKEN")), nil
 		})
 		if err != nil {
-			log.Println("pas bagian ngambil token error")
 			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
 			c.Abort()
 			return
 		}
+
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			idStr := claims["id"].(string)
 			id, err := uuid.Parse(idStr)
 			if err != nil {
-				log.Println("pas bagian ngambil id error")
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
 				c.Abort()
+				return
 			}
+
+			typeStr := claims["type"].(string)
+
 			c.Set("id", id)
+			c.Set("type", typeStr)
+
 			c.Next()
 			return
 		} else {
@@ -41,5 +45,6 @@ func Authorization() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
 	}
 }

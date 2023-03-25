@@ -36,23 +36,46 @@ func Rewards(db *gorm.DB, q *gin.Engine) {
 		}
 
 		ID, _ := c.Get("id")
-		var user model.User
-		if err := db.Where("id = ?", ID).First(&user).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
+		strType, _ := c.Get("type")
 
-		if user.Point < reward.Points {
-			utils.HttpRespFailed(c, http.StatusNotFound, "Not enough points")
-			return
-		}
+		if strType == "user" {
+			var user model.User
+			if err := db.Where("id = ?", ID).First(&user).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 
-		user.Point -= reward.Points
-		reward.Quantity -= 1
+			if user.Point < reward.Points {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Not enough points")
+				return
+			}
 
-		if err := db.Save(&user).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+			user.Point -= reward.Points
+			reward.Quantity -= 1
+
+			if err := db.Save(&user).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+		} else if strType == "company" {
+			var company model.Company
+			if err := db.Where("id = ?", ID).First(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			if company.Point < reward.Points {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Not enough points")
+				return
+			}
+
+			company.Point -= reward.Points
+			reward.Quantity -= 1
+
+			if err := db.Save(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		if err := db.Save(&reward).Error; err != nil {
