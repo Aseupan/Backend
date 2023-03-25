@@ -34,6 +34,13 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		// Check if the email is already registered
+		var existingUser model.User
+		if err := db.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+			utils.HttpRespFailed(c, http.StatusConflict, "Email is already registered")
+			return
+		}
+
 		newUser := model.User{
 			ID:        uuid.New(),
 			Name:      input.Name,
@@ -70,6 +77,13 @@ func CompanyRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		// Check if the email is already registered
+		var existingCompany model.Company
+		if err := db.Where("company_email = ?", input.CompanyEmail).First(&existingCompany).Error; err == nil {
+			utils.HttpRespFailed(c, http.StatusConflict, "Email is already registered")
+			return
+		}
+
 		newCompany := model.Company{
 			ID:             uuid.New(),
 			CompanyName:    input.CompanyName,
@@ -90,22 +104,27 @@ func Login(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 	// user login
 	r.POST("/login", func(c *gin.Context) {
-		var input model.UserLoginInput
+		var input model.LoginInput
 		if err := c.BindJSON(&input); err != nil {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 			return
 		}
 
-		var login model.User
-		if err := db.Where("email = ?", input.Email).First(&login).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+		var user model.User
+		if err := db.Where("email = ?", input.Email).First(&user).Error; err != nil {
+			// utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
 		}
 
-		if utils.CompareHash(input.Password, login.Password) {
+		var company model.Company
+		if err := db.Where("company_email = ?", input.Email).First(&company).Error; err != nil {
+			// utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+		}
+
+		if user.ID != uuid.Nil && utils.CompareHash(input.Password, user.Password) {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-				"id":  login.ID,
-				"exp": time.Now().Add(time.Hour).Unix(),
+				"id":   user.ID,
+				"type": "user",
+				"exp":  time.Now().Add(time.Hour).Unix(),
 			})
 
 			strToken, err := token.SignedString([]byte(os.Getenv("TOKEN")))
@@ -115,15 +134,36 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			}
 
 			utils.HttpRespSuccess(c, http.StatusOK, "Parsed token", gin.H{
-				"name":  login.Name,
+				"name":  user.Name,
 				"token": strToken,
+				"type":  "user",
+			})
+
+		} else if company.ID != uuid.Nil && utils.CompareHash(input.Password, company.Password) {
+			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+				"id":   company.ID,
+				"type": "company",
+				"exp":  time.Now().Add(time.Hour).Unix(),
+			})
+
+			strToken, err := token.SignedString([]byte(os.Getenv("TOKEN")))
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Parsed token", gin.H{
+				"name":  company.CompanyName,
+				"token": strToken,
+				"type":  "company",
 			})
 
 		} else {
-			utils.HttpRespFailed(c, http.StatusForbidden, "Wrong password")
+			utils.HttpRespFailed(c, http.StatusForbidden, "Wrong email or password")
 			return
 		}
 	})
+
 }
 
 func ResetPassword(db *gorm.DB, q *gin.Engine) {

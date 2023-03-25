@@ -10,12 +10,13 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal(err.Error())
-	// }
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	// supabase
 	databaseConf, err := config.NewDatabase()
@@ -66,6 +67,7 @@ func main() {
 	controller.UserHome(db, r)
 	controller.CreditStore(db, r)
 	controller.Rewards(db, r)
+	controller.Info(db, r)
 
 	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		panic(err.Error())

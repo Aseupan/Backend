@@ -141,8 +141,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 
 		var updated model.CreditStoreCart
 		if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
-			// utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			// return
 
 			// its not in cart yet
 			addToCart := model.CreditStoreCart{

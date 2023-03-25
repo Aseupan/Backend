@@ -18,7 +18,7 @@ type User struct {
 	UpdatedAt      time.Time
 }
 
-type UserLoginInput struct {
+type LoginInput struct {
 	Email    string `gorm:"binding:required" json:"email"`
 	Password string `gorm:"binding:required" json:"password"`
 }
