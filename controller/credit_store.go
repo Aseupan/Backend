@@ -18,12 +18,11 @@ import (
 )
 
 func CreditStore(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api/user/credit-store")
+	r := q.Group("/api/credit-store")
 	// get all
 	r.GET("/all", middleware.Authorization(), func(c *gin.Context) {
 		var scores []model.CreditStore
 		if err := db.Find(&scores).Error; err != nil {
-			log.Println("di sini error mencari data")
 			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 			return
 		}
@@ -37,16 +36,33 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		var totalPoints int
 
 		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
+		strType, _ := c.Get("type")
 
 		var cart []model.CreditStoreCart
-		if err := db.Where("user_id = ?", userID).Find(&cart).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
+			}
+
+			if err := db.Where("company_id = ?", companyID).Find(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
+
+			if err := db.Where("user_id = ?", userID).Find(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		for _, v := range cart {
@@ -76,42 +92,87 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		}
 
 		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
+		strType, _ := c.Get("type")
 
-		parsedID, err := strconv.ParseUint(strconv.Itoa(input.ID), 10, 0)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
-			return
-		}
+		var addToCart model.CreditStoreCart
 
-		addToCart := model.CreditStoreCart{
-			UserID:        userID,
-			CreditStoreID: uint(parsedID),
-			Points:        credit.Points,
-			Price:         credit.Price,
-			Quantity:      1,
-		}
-
-		// handle error if user already add to cart
-		var isExist model.CreditStoreCart
-		if err := db.Where("user_id = ? ", userID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
-			log.Println("sudah ada di cart")
-			// update
-			isExist.Points += credit.Points
-			isExist.Price += credit.Price
-			isExist.Quantity += 1
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
-				log.Println("error update")
-				utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "added to cart", isExist)
-			return
+			parsedID, err := strconv.ParseUint(strconv.Itoa(input.ID), 10, 0)
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+				return
+			}
+
+			addToCart = model.CreditStoreCart{
+				CompanyID:     companyID,
+				CreditStoreID: uint(parsedID),
+				Points:        credit.Points,
+				Price:         credit.Price,
+				Quantity:      1,
+			}
+
+			// handle error if company already add to cart
+			var isExist model.CreditStoreCart
+			if err := db.Where("company_id = ? ", companyID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
+				log.Println("sudah ada di cart")
+				// update
+				isExist.Points += credit.Points
+				isExist.Price += credit.Price
+				isExist.Quantity += 1
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
+					log.Println("error update")
+					utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Update cart", isExist)
+				return
+			}
+
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
+
+			parsedID, err := strconv.ParseUint(strconv.Itoa(input.ID), 10, 0)
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+				return
+			}
+
+			addToCart = model.CreditStoreCart{
+				UserID:        userID,
+				CreditStoreID: uint(parsedID),
+				Points:        credit.Points,
+				Price:         credit.Price,
+				Quantity:      1,
+			}
+
+			// handle error if user already add to cart
+			var isExist model.CreditStoreCart
+			if err := db.Where("user_id = ? ", userID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
+				log.Println("sudah ada di cart")
+				// update
+				isExist.Points += credit.Points
+				isExist.Price += credit.Price
+				isExist.Quantity += 1
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
+					log.Println("error update")
+					utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "added to cart", isExist)
+				return
+			}
 		}
 
 		if err := db.Create(&addToCart).Error; err != nil {
@@ -133,47 +194,90 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		}
 
 		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
+		strType := c.GetString("type")
 
 		var updated model.CreditStoreCart
-		if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
 
-			// its not in cart yet
-			addToCart := model.CreditStoreCart{
-				UserID:        userID,
-				CreditStoreID: credit.ID,
-				Points:        credit.Points,
-				Price:         credit.Price,
-				Quantity:      1,
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
 			}
 
-			if err := db.Create(&addToCart).Error; err != nil {
+			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
+				// its not in cart yet
+				addToCart := model.CreditStoreCart{
+					CompanyID:     companyID,
+					CreditStoreID: credit.ID,
+					Points:        credit.Points,
+					Price:         credit.Price,
+					Quantity:      1,
+				}
+
+				if err := db.Create(&addToCart).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "added to cart", addToCart)
+				return
+			}
+
+			// update
+			updated.Points += credit.Points
+			updated.Price += credit.Price
+			updated.Quantity += 1
+
+			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).Save(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "added new item", addToCart)
+			utils.HttpRespSuccess(c, http.StatusOK, "Update cart", updated)
 			return
-		}
 
-		updated.Points += credit.Points
-		updated.Price += credit.Price
-		updated.Quantity += 1
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
 
-		// check if exist
-		var isExist model.CreditStoreCart
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
-			return
-		}
+			if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
+				// its not in cart yet
+				addToCart := model.CreditStoreCart{
+					UserID:        userID,
+					CreditStoreID: credit.ID,
+					Points:        credit.Points,
+					Price:         credit.Price,
+					Quantity:      1,
+				}
 
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+				if err := db.Create(&addToCart).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "added new item", addToCart)
+				return
+			}
+
+			updated.Points += credit.Points
+			updated.Price += credit.Price
+			updated.Quantity += 1
+
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Added 1 amount", updated)
@@ -190,50 +294,102 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		}
 
 		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
+		strType := c.GetString("type")
 
 		var updated model.CreditStoreCart
-		if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
 
-		updated.Points -= credit.Points
-		updated.Price -= credit.Price
-		updated.Quantity -= 1
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
+			}
 
-		// check if exist
-		var isExist model.CreditStoreCart
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if updated.Quantity == 0 {
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
-			return
-		} else if updated.Quantity < 0 {
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+			updated.Points -= credit.Points
+			updated.Price -= credit.Price
+			updated.Quantity -= 1
+
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if updated.Quantity == 0 {
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			} else if updated.Quantity < 0 {
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			}
+
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
-			return
-		}
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
 
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+			var updated model.CreditStoreCart
+			if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			updated.Points -= credit.Points
+			updated.Price -= credit.Price
+			updated.Quantity -= 1
+
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if updated.Quantity == 0 {
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			} else if updated.Quantity < 0 {
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			}
+
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Removed 1 amount", updated)
@@ -249,57 +405,108 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
-
-		// check if exist
-		var isExist model.CreditStoreCart
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		var input model.CreditStoreUpdateQuantityInput
 		if err := c.BindJSON(&input); err != nil {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 			return
 		}
 
+		ID, _ := c.Get("id")
+		strType, _ := c.Get("type")
+
 		var updated model.CreditStoreCart
-		if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
 
-		updated.Points += credit.Points * input.Quantity
-		updated.Price += credit.Price * input.Quantity
-		updated.Quantity += input.Quantity
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
+			}
 
-		if updated.Quantity == 0 {
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
-			return
-		} else if updated.Quantity < 0 {
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+			updated.Points += credit.Points * input.Quantity
+			updated.Price += credit.Price * input.Quantity
+			updated.Quantity += input.Quantity
+
+			if updated.Quantity == 0 {
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			} else if updated.Quantity < 0 {
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			}
+
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
-			return
-		}
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
 
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			updated.Points += credit.Points * input.Quantity
+			updated.Price += credit.Price * input.Quantity
+			updated.Quantity += input.Quantity
+
+			if updated.Quantity == 0 {
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			} else if updated.Quantity < 0 {
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			}
+
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Added custom amount", updated)
@@ -315,57 +522,108 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
-
-		// check if exist
-		var isExist model.CreditStoreCart
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		var input model.CreditStoreUpdateQuantityInput
 		if err := c.BindJSON(&input); err != nil {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 			return
 		}
 
+		ID, _ := c.Get("id")
+		strType, _ := c.Get("type")
+
 		var updated model.CreditStoreCart
-		if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
 
-		updated.Points -= credit.Points * input.Quantity
-		updated.Price -= credit.Price * input.Quantity
-		updated.Quantity -= input.Quantity
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
+			}
 
-		if updated.Quantity == 0 {
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
-			return
-		} else if updated.Quantity < 0 {
-			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+			updated.Points -= credit.Points * input.Quantity
+			updated.Price -= credit.Price * input.Quantity
+			updated.Quantity -= input.Quantity
+
+			if updated.Quantity == 0 {
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			} else if updated.Quantity < 0 {
+				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			}
+
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
-			return
-		}
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
 
-		if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+			// check if exist
+			var isExist model.CreditStoreCart
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			updated.Points -= credit.Points * input.Quantity
+			updated.Price -= credit.Price * input.Quantity
+			updated.Quantity -= input.Quantity
+
+			if updated.Quantity == 0 {
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			} else if updated.Quantity < 0 {
+				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Delete(&updated).Error; err != nil {
+					utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "Removed item from cart", updated)
+				return
+			}
+
+			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).Save(&updated).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Removed custom amount", updated)
@@ -380,21 +638,43 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		}
 
 		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
+		strType, _ := c.Get("type")
 
 		var cart model.CreditStoreCart
-		if err := db.Where("id = ?", input.ID).Where("user_id = ?", userID).First(&cart).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
 
-		if err := db.Delete(&cart).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
+			}
+
+			if err := db.Where("id = ?", input.ID).Where("company_id = ?", companyID).First(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			if err := db.Delete(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
+
+			if err := db.Where("id = ?", input.ID).Where("user_id = ?", userID).First(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			if err := db.Delete(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Remove from cart", cart)
@@ -407,124 +687,254 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		var totalPoints int
 
 		ID, _ := c.Get("id")
-		userID, ok := ID.(uuid.UUID)
-		if !ok {
-			utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
-			return
-		}
+		strType, _ := c.Get("type")
 
-		var user model.User
-		if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
-
-		var cart []model.CreditStoreCart
-		if err := db.Where("user_id = ?", userID).Find(&cart).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
-
-		var items []midtrans.ItemDetails
-		for _, v := range cart {
-			item := midtrans.ItemDetails{
-				ID:           strconv.Itoa(v.Points),
-				Price:        int64(v.Price),
-				Qty:          int32(v.Quantity), // Assuming each item is purchased once
-				Name:         "Points",
-				Brand:        "aseupan",
-				Category:     "Chips",
-				MerchantName: "Midtrans",
+		if strType == "company" {
+			companyID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+				return
 			}
-			items = append(items, item)
-		}
 
-		for _, v := range cart {
-			total += v.Price
-			totalPoints += v.Points
-		}
-
-		var input model.CreditStorePaymentInput
-		if err := c.BindJSON(&input); err != nil {
-			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
-			return
-		}
-
-		midtransClient := coreapi.Client{}
-		midtransClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
-		orderID := utils.RandomOrderID()
-
-		req := &coreapi.ChargeReq{}
-
-		if input.PaymentMethod == 1 {
-			req = &coreapi.ChargeReq{
-				PaymentType: "gopay",
-				TransactionDetails: midtrans.TransactionDetails{
-					OrderID:  orderID,
-					GrossAmt: int64(total),
-				},
-				Gopay: &coreapi.GopayDetails{
-					EnableCallback: true,
-					CallbackUrl:    "https://example.com/callback",
-				},
-				CustomerDetails: &midtrans.CustomerDetails{
-					FName: user.Name,
-					Email: user.Email,
-					Phone: user.Phone,
-				},
-				Items: &items,
+			var company model.Company
+			if err := db.Where("id = ?", companyID).First(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
 			}
-		} else if input.PaymentMethod == 2 {
-			req = &coreapi.ChargeReq{
-				PaymentType: "shopeepay",
-				TransactionDetails: midtrans.TransactionDetails{
-					OrderID:  orderID,
-					GrossAmt: int64(total),
-				},
-				ShopeePay: &coreapi.ShopeePayDetails{
-					CallbackUrl: "https://example.com/callback",
-				},
-				CustomerDetails: &midtrans.CustomerDetails{
-					FName: user.Name,
-					Email: user.Email,
-					Phone: user.Phone,
-				},
-				Items: &items,
+
+			var cart []model.CreditStoreCart
+			if err := db.Where("company_id = ?", companyID).Find(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
 			}
-		}
 
-		resp, err := midtransClient.ChargeTransaction(req)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
+			var items []midtrans.ItemDetails
+			for _, v := range cart {
+				item := midtrans.ItemDetails{
+					ID:           strconv.Itoa(v.Points),
+					Price:        int64(v.Price),
+					Qty:          int32(v.Quantity), // Assuming each item is purchased once
+					Name:         "Points",
+					Brand:        "aseupan",
+					Category:     "Chips",
+					MerchantName: "Midtrans",
+				}
+				items = append(items, item)
+			}
 
-		utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
+			for _, v := range cart {
+				total += v.Price
+				totalPoints += v.Points
+			}
 
-		// update user credit
-		user.Point += totalPoints
-		if err := db.Save(&user).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
+			var input model.CreditStorePaymentInput
+			if err := c.BindJSON(&input); err != nil {
+				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+				return
+			}
 
-		// delete cart
-		if err := db.Where("user_id = ?", userID).Delete(&cart).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
+			midtransClient := coreapi.Client{}
+			midtransClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
+			orderID := utils.RandomOrderID()
 
-		inputTransactionHistory := model.TransactionHistory{
-			UserID:    userID,
-			OrderID:   orderID,
-			Price:     total,
-			Points:    totalPoints,
-			CreatedAt: time.Now(),
-		}
+			req := &coreapi.ChargeReq{}
 
-		if err := db.Create(&inputTransactionHistory).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
+			if input.PaymentMethod == 1 {
+				req = &coreapi.ChargeReq{
+					PaymentType: "gopay",
+					TransactionDetails: midtrans.TransactionDetails{
+						OrderID:  orderID,
+						GrossAmt: int64(total),
+					},
+					Gopay: &coreapi.GopayDetails{
+						EnableCallback: true,
+						CallbackUrl:    "https://example.com/callback",
+					},
+					CustomerDetails: &midtrans.CustomerDetails{
+						FName: company.CompanyName,
+						Email: company.CompanyEmail,
+						Phone: company.CompanyPhone,
+					},
+					Items: &items,
+				}
+			} else if input.PaymentMethod == 2 {
+				req = &coreapi.ChargeReq{
+					PaymentType: "shopeepay",
+					TransactionDetails: midtrans.TransactionDetails{
+						OrderID:  orderID,
+						GrossAmt: int64(total),
+					},
+					ShopeePay: &coreapi.ShopeePayDetails{
+						CallbackUrl: "https://example.com/callback",
+					},
+					CustomerDetails: &midtrans.CustomerDetails{
+						FName: company.CompanyName,
+						Email: company.CompanyEmail,
+						Phone: company.CompanyPhone,
+					},
+					Items: &items,
+				}
+			}
+
+			resp, err := midtransClient.ChargeTransaction(req)
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
+
+			// update user credit
+			company.Point += totalPoints
+			if err := db.Save(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			// delete cart
+			if err := db.Where("company_id = ?", companyID).Delete(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			inputTransactionHistory := model.TransactionHistory{
+				CompanyID: companyID,
+				OrderID:   orderID,
+				Price:     total,
+				Points:    totalPoints,
+				CreatedAt: time.Now(),
+			}
+
+			if err := db.Create(&inputTransactionHistory).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
+
+		} else if strType == "user" {
+			userID, ok := ID.(uuid.UUID)
+			if !ok {
+				utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+				return
+			}
+
+			var user model.User
+			if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			var cart []model.CreditStoreCart
+			if err := db.Where("user_id = ?", userID).Find(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			var items []midtrans.ItemDetails
+			for _, v := range cart {
+				item := midtrans.ItemDetails{
+					ID:           strconv.Itoa(v.Points),
+					Price:        int64(v.Price),
+					Qty:          int32(v.Quantity), // Assuming each item is purchased once
+					Name:         "Points",
+					Brand:        "aseupan",
+					Category:     "Chips",
+					MerchantName: "Midtrans",
+				}
+				items = append(items, item)
+			}
+
+			for _, v := range cart {
+				total += v.Price
+				totalPoints += v.Points
+			}
+
+			var input model.CreditStorePaymentInput
+			if err := c.BindJSON(&input); err != nil {
+				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+				return
+			}
+
+			midtransClient := coreapi.Client{}
+			midtransClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
+			orderID := utils.RandomOrderID()
+
+			req := &coreapi.ChargeReq{}
+
+			if input.PaymentMethod == 1 {
+				req = &coreapi.ChargeReq{
+					PaymentType: "gopay",
+					TransactionDetails: midtrans.TransactionDetails{
+						OrderID:  orderID,
+						GrossAmt: int64(total),
+					},
+					Gopay: &coreapi.GopayDetails{
+						EnableCallback: true,
+						CallbackUrl:    "https://example.com/callback",
+					},
+					CustomerDetails: &midtrans.CustomerDetails{
+						FName: user.Name,
+						Email: user.Email,
+						Phone: user.Phone,
+					},
+					Items: &items,
+				}
+			} else if input.PaymentMethod == 2 {
+				req = &coreapi.ChargeReq{
+					PaymentType: "shopeepay",
+					TransactionDetails: midtrans.TransactionDetails{
+						OrderID:  orderID,
+						GrossAmt: int64(total),
+					},
+					ShopeePay: &coreapi.ShopeePayDetails{
+						CallbackUrl: "https://example.com/callback",
+					},
+					CustomerDetails: &midtrans.CustomerDetails{
+						FName: user.Name,
+						Email: user.Email,
+						Phone: user.Phone,
+					},
+					Items: &items,
+				}
+			}
+
+			resp, err := midtransClient.ChargeTransaction(req)
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
+
+			// update user credit
+			user.Point += totalPoints
+			if err := db.Save(&user).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			// delete cart
+			if err := db.Where("user_id = ?", userID).Delete(&cart).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			inputTransactionHistory := model.TransactionHistory{
+				UserID:    userID,
+				OrderID:   orderID,
+				Price:     total,
+				Points:    totalPoints,
+				CreatedAt: time.Now(),
+			}
+
+			if err := db.Create(&inputTransactionHistory).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
 		}
 	})
+
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func Info(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api/user/info")
+	r := q.Group("/api/info")
 	r.GET("/all-info", func(c *gin.Context) {
 		var infos []model.Info
 		if res := db.Find(&infos); res.Error != nil {

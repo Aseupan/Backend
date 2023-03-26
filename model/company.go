@@ -12,8 +12,10 @@ type Company struct {
 	CompanyPicture string    `json:"company_picture"`
 	CompanyAddress string    `json:"company_address"`
 	CompanyEmail   string    `json:"company_email"`
+	CompanyPhone   string    `json:"company_phone"`
 	Password       string    `json:"password"`
 	Point          int       `gorm:"default:0;not null" json:"point"`
+	Verified       bool      `gorm:"default:false;not null" json:"verified"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

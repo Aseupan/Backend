@@ -61,13 +61,12 @@ func main() {
 	controller.CompanyRegister(db, r)
 	controller.UserRegister(db, r)
 	controller.Login(db, r)
+	controller.Profile(db, r)
+	controller.Address(db, r)
 	controller.ResetPassword(db, r)
-	controller.UserProfile(db, r)
-	controller.UserHome(db, r)
 	controller.CreditStore(db, r)
 	controller.Rewards(db, r)
 	controller.Info(db, r)
-	controller.Profile(db, r)
 
 	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		panic(err.Error())

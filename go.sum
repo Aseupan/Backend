@@ -1,5 +1,7 @@
 cloud.google.com/go/compute/metadata v0.2.0 h1:nBbNSZyDpkNlo3DepaaLKVuO7ClyifSAmNloSCZrHnQ=
 cloud.google.com/go/compute/metadata v0.2.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
+github.com/adityarizkyramadhan/supabase-storage-uploader v0.0.3 h1:vm5TZFAORijNpH56PGOPFV/Nx4jAuGtdjg+H7+LiDVA=
+github.com/adityarizkyramadhan/supabase-storage-uploader v0.0.3/go.mod h1:Qm8l/PI9Tbm2sEGVaTCrN03wBBclZFkrq1e+9DZhAWw=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/badoux/checkmail v1.2.1 h1:TzwYx5pnsV6anJweMx2auXdekBwGr/yt1GgalIx9nBQ=

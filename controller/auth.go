@@ -171,8 +171,8 @@ func Login(db *gorm.DB, q *gin.Engine) {
 }
 
 func ResetPassword(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api/user")
-	// reset password via email
+	r := q.Group("/api")
+
 	r.POST("/reset-password", middleware.Authorization(), func(c *gin.Context) {
 		var input model.UserResetPasswordInput
 		if err := c.BindJSON(&input); err != nil {
@@ -181,17 +181,35 @@ func ResetPassword(db *gorm.DB, q *gin.Engine) {
 		}
 
 		ID, _ := c.Get("id")
+		strType, _ := c.Get("type")
 
-		var user model.User
-		if err := db.Where("id = ?", ID).First(&user).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			return
-		}
+		if strType == "company" {
+			var company model.Company
+			if err := db.Where("id = ?", ID).First(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
 
-		user.Password = utils.Hash(input.Password)
+			company.Password = utils.Hash(input.Password)
 
-		if err := db.Save(&user).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			if err := db.Save(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+		} else if strType == "user" {
+			var user model.User
+			if err := db.Where("id = ?", ID).First(&user).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			user.Password = utils.Hash(input.Password)
+
+			if err := db.Save(&user).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Password reset", nil)

@@ -11,7 +11,7 @@ import (
 )
 
 func Rewards(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api/user/rewards")
+	r := q.Group("/api/rewards")
 	// user home
 	r.GET("/view-all", middleware.Authorization(), func(c *gin.Context) {
 		var rewards []model.Rewards
