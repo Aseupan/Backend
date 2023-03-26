@@ -10,8 +10,9 @@ type Address struct {
 	ID              uint      `gorm:"primaryKey" json:"id"`
 	User            User      `gorm:"ForeignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	UserID          uuid.UUID `json:"user_id"`
-	Company         Company   `gorm:"ForeignKey:CompanyID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	CompanyID       uuid.UUID `json:"company_id"`
+	Company         Company   `gorm:"ForeignKey:CompanyID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE,NULL;"`
+	CompanyID       uuid.UUID `gorm:"null" json:"company_id"`
+	Index           int       `json:"index"`
 	Name            string    `json:"name"`
 	Phone           string    `json:"phone"`
 	Address         string    `json:"address"`

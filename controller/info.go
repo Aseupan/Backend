@@ -18,7 +18,7 @@ func Info(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		utils.HttpRespSuccess(c, http.StatusFound, "Queried all info", infos)
+		utils.HttpRespSuccess(c, http.StatusOK, "Queried all info", infos)
 	})
 
 	r.GET("/detailed/:id", func(c *gin.Context) {
@@ -29,6 +29,6 @@ func Info(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		utils.HttpRespSuccess(c, http.StatusFound, "Queried info", info)
+		utils.HttpRespSuccess(c, http.StatusOK, "Queried info", info)
 	})
 }

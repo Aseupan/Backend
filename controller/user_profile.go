@@ -72,6 +72,7 @@ func UserProfile(db *gorm.DB, q *gin.Engine) {
 		}
 
 		newAddres := model.Address{
+			CompanyID:       uuid.Nil,
 			UserID:          ID.(uuid.UUID),
 			Name:            input.Name,
 			Phone:           input.Phone,
