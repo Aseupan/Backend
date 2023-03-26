@@ -12,7 +12,7 @@ import (
 )
 
 func Profile(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api/profile")
+	r := q.Group("/api")
 
 	// get user profile
 	r.GET("/profile", middleware.Authorization(), func(c *gin.Context) {

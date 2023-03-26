@@ -14,7 +14,7 @@ import (
 )
 
 func Address(db *gorm.DB, q *gin.Engine) {
-	r := q.Group("/api/address")
+	r := q.Group("/api")
 
 	// list of user addresses
 	r.GET("/addresses", middleware.Authorization(), func(c *gin.Context) {
