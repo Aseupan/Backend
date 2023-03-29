@@ -33,6 +33,7 @@ func MakeSupaBaseConnectionDatabase(data *Database) (*gorm.DB, error) {
 		&model.TransactionHistory{},
 		&model.Rewards{},
 		&model.Info{},
+		&model.Campaign{},
 	); err != nil {
 		return nil, err
 	}

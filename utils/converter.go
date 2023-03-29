@@ -1,10 +1,17 @@
 package utils
 
-// func StringToInteger(input string, c *gin.Context) (int, bool) {
-// 	parsedID, err := strconv.ParseInt(input, 64, 64)
-// 	if err != nil {
-// 		HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
-// 		return 0, true
-// 	}
-// 	return parsedID, false
-// }
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+)
+
+func StringToInteger(input string, c *gin.Context) int {
+	converted, err := strconv.Atoi(input)
+	if err != nil {
+		HttpRespFailed(c, http.StatusBadRequest, "Invalid input")
+		return 0
+	}
+	return converted
+}
