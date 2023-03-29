@@ -66,8 +66,8 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		}
 
 		for _, v := range cart {
-			total += v.Price * v.Quantity
-			totalPoints += v.Points * v.Quantity
+			total += v.Price
+			totalPoints += v.Points
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "View cart", gin.H{
