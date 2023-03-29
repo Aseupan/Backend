@@ -641,6 +641,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 		strType, _ := c.Get("type")
 
 		var cart model.CreditStoreCart
+		var isItemExist model.CreditStoreCart
 
 		if strType == "company" {
 			companyID, ok := ID.(uuid.UUID)
@@ -649,12 +650,13 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			if err := db.Where("id = ?", input.ID).Where("company_id = ?", companyID).First(&cart).Error; err != nil {
+			// check if exist
+			if err := db.Where("credit_store_id = ?", input.ID).Where("company_id = ?", companyID).First(&isItemExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			if err := db.Delete(&cart).Error; err != nil {
+			if err := db.Where("credit_store_id = ?", input.ID).Where("company_id = ?", companyID).Delete(&cart).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
@@ -666,18 +668,20 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			if err := db.Where("id = ?", input.ID).Where("user_id = ?", userID).First(&cart).Error; err != nil {
+			// check if exist
+			if err := db.Where("credit_store_id = ?", input.ID).Where("user_id = ?", userID).First(&isItemExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			if err := db.Delete(&cart).Error; err != nil {
+			if err := db.Where("credit_store_id = ?", input.ID).Where("user_id = ?", userID).Delete(&cart).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
+
 		}
 
-		utils.HttpRespSuccess(c, http.StatusOK, "Remove from cart", cart)
+		utils.HttpRespSuccess(c, http.StatusOK, "Item removed from cart", nil)
 	})
 
 	// payment gateway
