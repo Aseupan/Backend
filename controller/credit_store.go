@@ -712,19 +712,19 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			var items []midtrans.ItemDetails
-			for _, v := range cart {
-				item := midtrans.ItemDetails{
-					ID:           strconv.Itoa(v.Points),
-					Price:        int64(v.Price),
-					Qty:          int32(v.Quantity), // Assuming each item is purchased once
-					Name:         "Points",
-					Brand:        "aseupan",
-					Category:     "Chips",
-					MerchantName: "Midtrans",
-				}
-				items = append(items, item)
-			}
+			// var items []midtrans.ItemDetails
+			// for _, v := range cart {
+			// 	item := midtrans.ItemDetails{
+			// 		ID:           strconv.Itoa(v.Points),
+			// 		Price:        int64(v.Price),
+			// 		Qty:          int32(v.Quantity), // Assuming each item is purchased once
+			// 		Name:         "Points",
+			// 		Brand:        "aseupan",
+			// 		Category:     "Chips",
+			// 		MerchantName: "Midtrans",
+			// 	}
+			// 	items = append(items, item)
+			// }
 
 			for _, v := range cart {
 				total += v.Price
@@ -759,7 +759,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: company.CompanyEmail,
 						Phone: company.CompanyPhone,
 					},
-					Items: &items,
+					// Items: &items,
 				}
 			} else if input.PaymentMethod == 2 {
 				req = &coreapi.ChargeReq{
@@ -776,7 +776,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: company.CompanyEmail,
 						Phone: company.CompanyPhone,
 					},
-					Items: &items,
+					// Items: &items,
 				}
 			}
 
@@ -785,8 +785,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
-
-			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
 
 			// update user credit
 			company.Point += totalPoints
@@ -835,19 +833,20 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			var items []midtrans.ItemDetails
-			for _, v := range cart {
-				item := midtrans.ItemDetails{
-					ID:           strconv.Itoa(v.Points),
-					Price:        int64(v.Price),
-					Qty:          int32(v.Quantity), // Assuming each item is purchased once
-					Name:         "Points",
-					Brand:        "aseupan",
-					Category:     "Chips",
-					MerchantName: "Midtrans",
-				}
-				items = append(items, item)
-			}
+			// var items []midtrans.ItemDetails
+			// for _, v := range cart {
+			// 	item := midtrans.ItemDetails{
+			// 		ID:           strconv.Itoa(v.Points),
+			// 		Price:        int64(v.Price),
+			// 		Qty:          int32(v.Quantity), // Assuming each item is purchased once
+			// 		Name:         "Points",
+			// 		Brand:        "aseupan",
+			// 		Category:     "Chips",
+			// 		MerchantName: "Midtrans",
+			// 	}
+			// 	log.Printf("item: %v", item.Price)
+			// 	items = append(items, item)
+			// }
 
 			for _, v := range cart {
 				total += v.Price
@@ -882,7 +881,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: user.Email,
 						Phone: user.Phone,
 					},
-					Items: &items,
+					// Items: &items,
 				}
 			} else if input.PaymentMethod == 2 {
 				req = &coreapi.ChargeReq{
@@ -899,7 +898,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: user.Email,
 						Phone: user.Phone,
 					},
-					Items: &items,
+					// Items: &items,
 				}
 			}
 
@@ -909,14 +908,42 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
-
 			// update user credit
 			user.Point += totalPoints
-			if err := db.Save(&user).Error; err != nil {
+			// if err := db.Save(&user).Error; err != nil {
+			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			// 	return
+			// }
+
+			var tempUser model.User
+			if err := db.Where("id = ?", userID).First(&tempUser).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
+
+			tempUser.Point += totalPoints
+
+			if err := db.Model(&user).Updates(&tempUser).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			// var company model.Company
+			// if err := db.Where("id = ?", ID).First(&company).Error; err != nil {
+			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			// 	return
+			// }
+
+			// var input model.CompanyUpdateProfileInput
+			// if err := c.BindJSON(&input); err != nil {
+			// 	utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			// 	return
+			// }
+
+			// if err := db.Model(&company).Updates(input).Error; err != nil {
+			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+			// 	return
+			// }
 
 			// delete cart
 			if err := db.Where("user_id = ?", userID).Delete(&cart).Error; err != nil {

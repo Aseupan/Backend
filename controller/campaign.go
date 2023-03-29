@@ -15,6 +15,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// big party / company
 	r.POST("/create", middleware.Authorization(), func(c *gin.Context) {
+		// ID, _ := c.Get("id")
 		strType, _ := c.Get("type")
 
 		if strType != "user" {
@@ -22,53 +23,21 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// name, err := c.FormFile("name")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Name is required")
-		// 	return
-		// }
+		// name := c.PostForm("name")
 
-		// description, err := c.FormFile("description")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Description is required")
-		// 	return
-		// }
+		// description := c.PostForm("description")
 
-		// target, err := c.FormFile("target")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Target is required")
-		// 	return
-		// }
+		// target := c.PostForm("target")
 
-		// area, err := c.FormFile("area")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Area is required")
-		// 	return
-		// }
+		// area := c.PostForm("area")
 
-		// startdate, err := c.FormFile("startdate")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Startdate is required")
-		// 	return
-		// }
+		// startDate := c.PostForm("startdate")
 
-		// enddate, err := c.FormFile("enddate")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Enddate is required")
-		// 	return
-		// }
+		// endDate := c.PostForm("enddate")
 
-		// urgent, err := c.FormFile("urgent")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Urgent is required")
-		// 	return
-		// }
+		// urgent := c.PostForm("urgent")
 
-		// foodType, err := c.FormFile("type")
-		// if err != nil {
-		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Type is required")
-		// 	return
-		// }
+		// foodType := c.PostFormArray("type")
 
 		// thumbnail1, err := c.FormFile("thumbnail1")
 		// if err != nil {
@@ -99,6 +68,16 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Thumbnail1 is required")
 		// 	return
 		// }
+
+		// var newCampaign model.Campaign
+		// newCampaign.Name = name
+		// newCampaign.Description = description
+		// newCampaign.Target =
+		// newCampaign.Area =
+		// newCampaign.StartDate =
+		// newCampaign.EndDate =
+		// newCampaign.Urgent =
+		// newCampaign.Type =
 
 	})
 
