@@ -25,7 +25,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	)
 
 	// big party / company
-	r.POST("/create", middleware.Authorization(), func(c *gin.Context) {
+	r.POST("company/create", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 		strType, _ := c.Get("type")
 
@@ -98,17 +98,17 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// user
-	r.GET("/all", middleware.Authorization(), func(c *gin.Context) {
+	r.GET("user/all", middleware.Authorization(), func(c *gin.Context) {
 		var campaigns []model.Campaign
 		if res := db.Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
 		}
 
-		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", nil)
+		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
 	})
 
-	r.GET("/detail/:id", middleware.Authorization(), func(c *gin.Context) {
+	r.GET("user/detail/:id", middleware.Authorization(), func(c *gin.Context) {
 		// strType, _ := c.Get("type")
 
 		// if strType != "user" {
