@@ -4,7 +4,6 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -117,16 +116,13 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				Quantity:      1,
 			}
 
-			// handle error if company already add to cart
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ? ", companyID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
-				log.Println("sudah ada di cart")
-				// update
+
 				isExist.Points += credit.Points
 				isExist.Price += credit.Price
 				isExist.Quantity += 1
 				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
-					log.Println("error update")
 					utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
 					return
 				}
@@ -156,16 +152,12 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				Quantity:      1,
 			}
 
-			// handle error if user already add to cart
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ? ", userID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
-				log.Println("sudah ada di cart")
-				// update
 				isExist.Points += credit.Points
 				isExist.Price += credit.Price
 				isExist.Quantity += 1
 				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
-					log.Println("error update")
 					utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
 					return
 				}
@@ -206,7 +198,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			}
 
 			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
-				// its not in cart yet
 				addToCart := model.CreditStoreCart{
 					CompanyID:     companyID,
 					CreditStoreID: credit.ID,
@@ -224,7 +215,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// update
 			updated.Points += credit.Points
 			updated.Price += credit.Price
 			updated.Quantity += 1
@@ -245,7 +235,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			}
 
 			if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
-				// its not in cart yet
 				addToCart := model.CreditStoreCart{
 					UserID:        userID,
 					CreditStoreID: credit.ID,
@@ -267,7 +256,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			updated.Price += credit.Price
 			updated.Quantity += 1
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -314,7 +302,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			updated.Price -= credit.Price
 			updated.Quantity -= 1
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -361,7 +348,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			updated.Price -= credit.Price
 			updated.Quantity -= 1
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -469,7 +455,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -540,7 +525,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -586,7 +570,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -650,7 +633,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			if err := db.Where("credit_store_id = ?", input.ID).Where("company_id = ?", companyID).First(&isItemExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
@@ -668,7 +650,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			if err := db.Where("credit_store_id = ?", input.ID).Where("user_id = ?", userID).First(&isItemExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return

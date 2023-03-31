@@ -4,7 +4,6 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
-	"log"
 	"net/http"
 	"time"
 
@@ -426,9 +425,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		user.Point -= additionalChip
 		user.UpdatedAt = time.Now()
 		chipAcquisition := utils.GetFoodPoints(donation.FoodType) * donation.Quantity
-		log.Println("foodType:", donation.FoodType)
-		log.Println("quantity:", donation.Quantity)
-		log.Println("chipAcquisition:", chipAcquisition)
 		user.Point += chipAcquisition
 		if err := db.Save(&user); err.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error.Error())
