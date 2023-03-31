@@ -4,6 +4,7 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
+	"log"
 	"net/http"
 	"time"
 
@@ -122,13 +123,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	})
 
 	r.GET("user/detail/:id", middleware.Authorization(), func(c *gin.Context) {
-		strType, _ := c.Get("type")
-
-		if strType != "user" {
-			utils.HttpRespFailed(c, http.StatusUnauthorized, "Unauthorized")
-			return
-		}
-
 		id := c.Param("id")
 
 		var campaign model.Campaign
@@ -146,8 +140,44 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		campaignID := utils.StringToUint(c.Param("campaignID"), c)
 
 		if strType != "user" {
-			utils.HttpRespFailed(c, http.StatusUnauthorized, "Unauthorized")
-			return
+			var input model.CompanyPersonalDonationInput
+			if err := c.BindJSON(&input); err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			newDonation := model.CompanyPersonalDonation{
+				CompanyID:   ID.(uuid.UUID),
+				CampaignID:  campaignID,
+				Description: input.Description,
+				FoodType:    input.FoodType,
+				Quantity:    input.Quantity,
+				Weight:      input.Weight,
+				ExpiredDate: input.ExpiredDate,
+			}
+
+			var campaign model.Campaign
+			if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			if campaign.Progress < campaign.Target {
+				if campaign.Progress+input.Quantity > campaign.Target {
+					utils.HttpRespFailed(c, http.StatusBadRequest, "target exceeded")
+					return
+				}
+
+				if res := db.Create(&newDonation); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				utils.HttpRespSuccess(c, http.StatusOK, "created new donation", newDonation)
+				return
+			}
+
+			utils.HttpRespFailed(c, http.StatusNotFound, "is finished")
 		}
 
 		var input model.UserPersonalDonationInput
@@ -184,6 +214,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			}
 
 			utils.HttpRespSuccess(c, http.StatusOK, "created new donation", newDonation)
+			return
 		}
 
 		utils.HttpRespFailed(c, http.StatusNotFound, "is finished")
@@ -192,6 +223,21 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// get user primary address
 	r.GET("user/user-primary-address", middleware.Authorization(), func(c *gin.Context) {
+		strType, _ := c.Get("type")
+		if strType != "user" {
+			ID, _ := c.Get("id")
+
+			var primaryAddress model.Address
+
+			if res := db.Where("company_id = ?", ID).Where("primary_address = ?", true).First(&primaryAddress); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, "company doesnt have primary address / company doesnt have an address")
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "primary address", primaryAddress)
+			return
+		}
+
 		ID, _ := c.Get("id")
 
 		var primaryAddress model.Address
@@ -233,6 +279,115 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	r.POST("user/donate/:campaignID/confirm", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 		campaignID := utils.StringToUint(c.Param("campaignID"), c)
+		strType, _ := c.Get("type")
+
+		if strType != "user" {
+			var input model.CompanyPersonalDonationConfirmationInput
+			if err := c.BindJSON(&input); err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			var donation model.CompanyPersonalDonation
+			if res := db.Where("company_id = ?", ID).Where("campaign_id = ?", campaignID).Order("created_at desc").Limit(1).First(&donation); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			var company model.Company
+			if res := db.Where("id = ?", ID).First(&company); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			var additionalChip int
+			for _, value := range input.AdditionalChips {
+				if value == 1 {
+					additionalChip += 120
+				} else if value == 2 {
+					additionalChip += 75
+				} else if value == 3 {
+					additionalChip += 50
+				}
+			}
+
+			if additionalChip > company.Point {
+				utils.HttpRespFailed(c, http.StatusBadRequest, "not enough chips")
+				return
+			}
+
+			company.Point -= additionalChip
+			company.UpdatedAt = time.Now()
+			chipAcquisition := utils.GetFoodPoints(donation.FoodType) * donation.Quantity
+			company.Point += chipAcquisition
+			if err := db.Save(&company); err.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error.Error())
+				return
+			}
+
+			donation.PickUp = input.PickUp
+			donation.AdditionalChips = input.AdditionalChips
+			donation.ChipAcquisition = chipAcquisition
+			donation.IsDone = true
+			donation.UpdatedAt = time.Now()
+
+			if res := db.Save(&donation); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			var campaign model.Campaign
+			if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			campaign.Progress += donation.Quantity
+
+			if res := db.Save(&campaign); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			go func() {
+				time.Sleep(30 * time.Minute) // wait for 30 minutes before executing the task
+
+				var campaign model.Campaign
+				if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				// execute the desired task (e.g., move donation data to history table)
+				newHistory := model.History{
+					CompanyID: company.ID,
+					Title:     "Donate for " + campaign.Name,
+					Category:  1,
+					CreatedAt: time.Now(),
+				}
+
+				if res := db.Create(&newHistory); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				// delete the new donation data
+				if res := db.Delete(&donation); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+			}()
+
+			if campaign.Progress == campaign.Target {
+				if res := db.Delete(&campaign); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "donation confirmed", donation)
+			return
+		}
 
 		var input model.UserPersonalDonationConfirmationInput
 		if err := c.BindJSON(&input); err != nil {
@@ -241,7 +396,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		}
 
 		var donation model.UserPersonalDonation
-		if res := db.Where("user_id = ?", ID).Where("campaign_id = ?", campaignID).First(&donation); res.Error != nil {
+		if res := db.Where("user_id = ?", ID).Where("campaign_id = ?", campaignID).Order("created_at desc").Limit(1).First(&donation); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
 		}
@@ -271,6 +426,9 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		user.Point -= additionalChip
 		user.UpdatedAt = time.Now()
 		chipAcquisition := utils.GetFoodPoints(donation.FoodType) * donation.Quantity
+		log.Println("foodType:", donation.FoodType)
+		log.Println("quantity:", donation.Quantity)
+		log.Println("chipAcquisition:", chipAcquisition)
 		user.Point += chipAcquisition
 		if err := db.Save(&user); err.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error.Error())
@@ -343,6 +501,18 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	// get all user catering
 	r.GET("user/catering", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
+		strType, _ := c.Get("type")
+
+		if strType != "user" {
+			var catering []model.Catering
+			if res := db.Where("company_id = ?", ID).Find(&catering); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "company catering", catering)
+			return
+		}
 
 		var catering []model.Catering
 		if res := db.Where("user_id = ?", ID).Find(&catering); res.Error != nil {
@@ -356,6 +526,35 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	// create new catering
 	r.POST("user/catering", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
+		strType, _ := c.Get("type")
+
+		if strType != "user" {
+			var input model.NewCateringInput
+
+			if err := c.BindJSON(&input); err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			newCatering := model.Catering{
+				CompanyID:       ID.(uuid.UUID),
+				Name:            input.Name,
+				Phone:           input.Phone,
+				Address:         input.Address,
+				AddressDetailed: input.AddressDetailed,
+				IsSaved:         input.IsSaved,
+				CreatedAt:       time.Now(),
+			}
+
+			if res := db.Create(&newCatering); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "new catering created", newCatering)
+			return
+		}
+
 		var input model.NewCateringInput
 
 		if err := c.BindJSON(&input); err != nil {
@@ -382,11 +581,108 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	})
 
-	// user donate through catering
+	// donate through catering
 	r.POST("user/donate/catering/:campaignID/:cateringID", middleware.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 		campaignID := utils.StringToUint(c.Param("campaignID"), c)
 		cateringID := utils.StringToUint(c.Param("cateringID"), c)
+		strType, _ := c.Get("type")
+
+		if strType != "user" {
+			var input model.CompanyPersonalDonationConfirmationInput
+			if err := c.BindJSON(&input); err != nil {
+				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			donation := model.CompanyCateringDonation{
+				Company:         ID.(uuid.UUID),
+				CampaignID:      campaignID,
+				CateringID:      cateringID,
+				PickUp:          input.PickUp,
+				AdditionalChips: input.AdditionalChips,
+				IsDone:          true,
+				CreatedAt:       time.Now(),
+			}
+
+			var company model.Company
+			if res := db.Where("id = ?", ID).First(&company); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			var additionalChip int
+			for _, value := range input.AdditionalChips {
+				if value == 1 {
+					additionalChip += 120
+				} else if value == 2 {
+					additionalChip += 75
+				} else if value == 3 {
+					additionalChip += 50
+				}
+			}
+
+			if additionalChip > company.Point {
+				utils.HttpRespFailed(c, http.StatusBadRequest, "not enough chips")
+				return
+			}
+
+			company.Point -= additionalChip
+			company.UpdatedAt = time.Now()
+			if err := db.Save(&company); err.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error.Error())
+				return
+			}
+
+			if res := db.Create(&donation); res.Error != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+				return
+			}
+
+			go func() {
+				time.Sleep(30 * time.Minute) // wait for 30 minutes before executing the task
+
+				var campaign model.Campaign
+				if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				// execute the desired task (e.g., move donation data to history table)
+				newHistory := model.History{
+					CompanyID: company.ID,
+					Title:     "Donate for " + campaign.Name,
+					Category:  1,
+					CreatedAt: time.Now(),
+				}
+
+				if res := db.Create(&newHistory); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				// delete the new donation data
+				if res := db.Delete(&donation); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				var catering model.Catering
+				if res := db.Where("id = ?", cateringID).Where("company_id = ?", company.ID).First(&catering); res.Error != nil {
+					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+					return
+				}
+
+				if !catering.IsSaved {
+					if res := db.Delete(&catering); res.Error != nil {
+						utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+						return
+					}
+				}
+			}()
+
+			utils.HttpRespSuccess(c, http.StatusOK, "donation confirmed", donation)
+		}
 
 		var input model.UserPersonalDonationConfirmationInput
 		if err := c.BindJSON(&input); err != nil {
@@ -439,7 +735,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		}
 
 		go func() {
-			time.Sleep(30 * time.Minute) // wait for 30 minutes before executing the task
+			time.Sleep(30 * time.Minute)
 
 			var campaign model.Campaign
 			if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
@@ -447,7 +743,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// execute the desired task (e.g., move donation data to history table)
 			newHistory := model.History{
 				UserID:    user.ID,
 				Title:     "Donate for " + campaign.Name,
@@ -460,7 +755,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// delete the new donation data
 			if res := db.Delete(&donation); res.Error != nil {
 				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 				return

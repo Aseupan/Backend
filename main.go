@@ -10,12 +10,13 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal(err.Error())
-	// }
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	// supabase
 	databaseConf, err := config.NewDatabase()
@@ -52,12 +53,6 @@ func main() {
 		})
 	})
 
-	// r.GET("/", controller.HandleMain)
-	// r.GET("/login", controller.HandleGoogleLogin)
-	// r.GET("/callback", controller.HandleGoogleCallback)
-	// r.GET("/status", controller.HandleStatus)
-	// r.GET("/TLI", controller.HandleTestLoggedIn)
-	// r.GET("/logout", controller.HandleLogout)
 	controller.CompanyRegister(db, r)
 	controller.UserRegister(db, r)
 	controller.ResetPassword(db, r)
