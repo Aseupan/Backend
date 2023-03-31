@@ -18,13 +18,14 @@ func History(db *gorm.DB, q *gin.Engine) {
 
 		if strType != "user" {
 			companyID, _ := c.Get("id")
-			var ongoing []model.UserPersonalDonation
+			var ongoing []model.CompanyPersonalDonation
 			if err := db.Where("company_id = ?", companyID).Preload("Campaign").Find(&ongoing).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
 			utils.HttpRespSuccess(c, http.StatusOK, "get all ongoing", ongoing)
+			return
 		}
 
 		userID, _ := c.Get("id")
@@ -49,6 +50,7 @@ func History(db *gorm.DB, q *gin.Engine) {
 			}
 
 			utils.HttpRespSuccess(c, http.StatusOK, "get all completed", completed)
+			return
 		}
 
 		userID, _ := c.Get("id")
