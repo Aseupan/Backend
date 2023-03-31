@@ -17,7 +17,14 @@ func History(db *gorm.DB, q *gin.Engine) {
 		strType, _ := c.Get("type")
 
 		if strType != "user" {
-			utils.HttpRespFailed(c, http.StatusUnauthorized, "Not authorized")
+			companyID, _ := c.Get("id")
+			var ongoing []model.UserPersonalDonation
+			if err := db.Where("company_id = ?", companyID).Preload("Campaign").Find(&ongoing).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "get all ongoing", ongoing)
 		}
 
 		userID, _ := c.Get("id")
@@ -34,7 +41,14 @@ func History(db *gorm.DB, q *gin.Engine) {
 		strType, _ := c.Get("type")
 
 		if strType != "user" {
-			utils.HttpRespFailed(c, http.StatusUnauthorized, "Not authorized")
+			companyID, _ := c.Get("id")
+			var completed []model.History
+			if err := db.Where("company_id = ?", companyID).Find(&completed).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "get all completed", completed)
 		}
 
 		userID, _ := c.Get("id")

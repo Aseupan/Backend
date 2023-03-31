@@ -5,6 +5,7 @@ import (
 	"gsc/model"
 	"gsc/utils"
 	"net/http"
+	"os"
 	"time"
 
 	supabasestorageuploader "github.com/adityarizkyramadhan/supabase-storage-uploader"
@@ -17,10 +18,10 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api/campaign")
 
 	SupaBaseClient := supabasestorageuploader.NewSupabaseClient(
-		"https://flldkbhntqqaiflpxlhg.supabase.co",
-		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsbGRrYmhudHFxYWlmbHB4bGhnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY3NzU4Njk4OCwiZXhwIjoxOTkzMTYyOTg4fQ.CezKv4eOdEOyPEnVCqp3i0rNRLpz4MJOgL2GvM74QtQ",
-		"photo",
-		"",
+		os.Getenv("SUPABASE_PROJECT_URL"),
+		os.Getenv("SUPABASE_PROJECT_API_KEY"),
+		os.Getenv("SUPABASE_PROJECT_STORAGE_NAME"),
+		os.Getenv("SUPABASE_STORAGE_FOLDER"),
 	)
 
 	// big party / company
@@ -119,6 +120,27 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
+	})
+
+	// sort by urgent or not
+	r.GET("user/urgent", middleware.Authorization(), func(c *gin.Context) {
+		var campaigns []model.Campaign
+		if res := db.Where("urgent = ", 1).Find(&campaigns); res.Error != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+			return
+		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
+	})
+
+	// sort by newest
+	r.GET("user/newest", middleware.Authorization(), func(c *gin.Context) {
+		var campaigns []model.Campaign
+		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+			return
+		}
+
 	})
 
 	r.GET("user/detail/:id", middleware.Authorization(), func(c *gin.Context) {

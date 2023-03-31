@@ -35,7 +35,6 @@ func main() {
 	// if err != nil {
 	// 	panic(err.Error())
 	// }
-	// log.Println(db)
 
 	r := gin.Default()
 

@@ -5,6 +5,7 @@ import (
 	"gsc/model"
 	"gsc/utils"
 	"net/http"
+	"os"
 
 	supabasestorageuploader "github.com/adityarizkyramadhan/supabase-storage-uploader"
 	"github.com/gin-gonic/gin"
@@ -91,10 +92,10 @@ func Profile(db *gorm.DB, q *gin.Engine) {
 		strType, _ := c.Get("type")
 
 		SupaBaseClient := supabasestorageuploader.NewSupabaseClient(
-			"https://flldkbhntqqaiflpxlhg.supabase.co",
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsbGRrYmhudHFxYWlmbHB4bGhnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY3NzU4Njk4OCwiZXhwIjoxOTkzMTYyOTg4fQ.CezKv4eOdEOyPEnVCqp3i0rNRLpz4MJOgL2GvM74QtQ",
-			"photo",
-			"",
+			os.Getenv("SUPABASE_PROJECT_URL"),
+			os.Getenv("SUPABASE_PROJECT_API_KEY"),
+			os.Getenv("SUPABASE_PROJECT_STORAGE_NAME"),
+			os.Getenv("SUPABASE_STORAGE_FOLDER"),
 		)
 
 		if strType == "company" {

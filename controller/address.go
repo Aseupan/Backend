@@ -280,7 +280,6 @@ func Address(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// Get all addresses with an index greater than the deleted address and decrement their index value by 1
 			if err := db.Model(&model.Address{}).Where("company_id = ?", ID).Where("index > ?", address.Index).Update("index", gorm.Expr("index - ?", 1)).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 				return
@@ -297,7 +296,6 @@ func Address(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// Get all addresses with an index greater than the deleted address and decrement their index value by 1
 			if err := db.Model(&model.Address{}).Where("company_id = ?", ID).Where("index > ?", address.Index).Update("index", gorm.Expr("index - ?", 1)).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 				return
