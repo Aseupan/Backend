@@ -812,6 +812,19 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
+			// input into history
+			newHistory := model.History{
+				CompanyID: companyID,
+				Title:     "Buy " + strconv.Itoa(totalPoints) + " Chips",
+				Category:  2,
+				CreatedAt: time.Now(),
+			}
+
+			if err := db.Create(&newHistory).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
 			utils.HttpRespSuccess(c, http.StatusOK, "Payment success", resp)
 
 		} else if strType == "user" {
@@ -909,7 +922,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			}
 
 			// update user credit
-			user.Point += totalPoints
+			// user.Point += totalPoints
 			// if err := db.Save(&user).Error; err != nil {
 			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 			// 	return
@@ -928,23 +941,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// var company model.Company
-			// if err := db.Where("id = ?", ID).First(&company).Error; err != nil {
-			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			// 	return
-			// }
-
-			// var input model.CompanyUpdateProfileInput
-			// if err := c.BindJSON(&input); err != nil {
-			// 	utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
-			// 	return
-			// }
-
-			// if err := db.Model(&company).Updates(input).Error; err != nil {
-			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			// 	return
-			// }
-
 			// delete cart
 			if err := db.Where("user_id = ?", userID).Delete(&cart).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
@@ -960,6 +956,19 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			}
 
 			if err := db.Create(&inputTransactionHistory).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			// input into history
+			newHistory := model.History{
+				UserID:    userID,
+				Title:     "Buy " + strconv.Itoa(totalPoints) + " Chips",
+				Category:  2,
+				CreatedAt: time.Now(),
+			}
+
+			if err := db.Create(&newHistory).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}

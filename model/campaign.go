@@ -25,13 +25,13 @@ type Campaign struct {
 }
 
 type CampaignInput struct {
-	Name        string   `gorm:"binding:required" json:"name"`
-	Description string   `gorm:"binding:required" json:"description"`
-	Target      int      `gorm:"binding:required" json:"target"`
-	Area        string   `gorm:"binding:required" json:"area"`
-	StartDate   string   `gorm:"binding:required" json:"start_date"`
-	EndDate     string   `gorm:"binding:required" json:"end_date"`
-	Thumbnail   string   `gorm:"binding:required" json:"thumbnail"`
-	Urgent      int      `gorm:"binding:required" json:"urgent"`
-	Type        []string `json:"type"`
+	Name        string         `gorm:"binding:required" json:"name"`
+	Description string         `gorm:"binding:required" json:"description"`
+	Target      int            `gorm:"binding:required" json:"target"`
+	Area        string         `gorm:"binding:required" json:"area"`
+	StartDate   string         `gorm:"binding:required" json:"start_date"`
+	EndDate     string         `gorm:"binding:required" json:"end_date"`
+	Thumbnail   string         `gorm:"binding:required" json:"thumbnail"`
+	Urgent      int            `gorm:"binding:required" json:"urgent"`
+	Type        pq.StringArray `gorm:"type:text[]" json:"type"`
 }

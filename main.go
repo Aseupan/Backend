@@ -68,6 +68,7 @@ func main() {
 	controller.Rewards(db, r)
 	controller.Info(db, r)
 	controller.Campaign(db, r)
+	controller.History(db, r)
 
 	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		panic(err.Error())

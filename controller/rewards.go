@@ -5,6 +5,7 @@ import (
 	"gsc/model"
 	"gsc/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -57,6 +58,20 @@ func Rewards(db *gorm.DB, q *gin.Engine) {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
+
+			// input into history
+			newHistory := model.History{
+				UserID:    user.ID,
+				Title:     reward.Name,
+				Category:  3,
+				CreatedAt: time.Now(),
+			}
+
+			if err := db.Create(&newHistory).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
 		} else if strType == "company" {
 			var company model.Company
 			if err := db.Where("id = ?", ID).First(&company).Error; err != nil {
@@ -73,6 +88,19 @@ func Rewards(db *gorm.DB, q *gin.Engine) {
 			reward.Quantity -= 1
 
 			if err := db.Save(&company).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+				return
+			}
+
+			// input into history
+			newHistory := model.History{
+				CompanyID: company.ID,
+				Title:     reward.Name,
+				Category:  3,
+				CreatedAt: time.Now(),
+			}
+
+			if err := db.Create(&newHistory).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}

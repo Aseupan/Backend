@@ -38,3 +38,9 @@ type CompanyUpdateProfileInput struct {
 type CompanyResetPasswordInput struct {
 	Password string `gorm:"binding:required" json:"password"`
 }
+
+type CampaignCompanyReciever struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+}

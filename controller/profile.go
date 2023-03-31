@@ -148,5 +148,4 @@ func Profile(db *gorm.DB, q *gin.Engine) {
 			utils.HttpRespSuccess(c, http.StatusOK, "User profile picture updated", user)
 		}
 	})
-
 }
