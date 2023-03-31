@@ -4,7 +4,6 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
-	"log"
 	"net/http"
 	"time"
 
@@ -350,7 +349,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			}
 
 			go func() {
-				time.Sleep(30 * time.Minute) // wait for 30 minutes before executing the task
+				time.Sleep(30 * time.Minute)
 
 				var campaign model.Campaign
 				if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
@@ -358,7 +357,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 					return
 				}
 
-				// execute the desired task (e.g., move donation data to history table)
 				newHistory := model.History{
 					CompanyID: company.ID,
 					Title:     "Donate for " + campaign.Name,
@@ -371,7 +369,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 					return
 				}
 
-				// delete the new donation data
 				if res := db.Delete(&donation); res.Error != nil {
 					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 					return
@@ -426,9 +423,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		user.Point -= additionalChip
 		user.UpdatedAt = time.Now()
 		chipAcquisition := utils.GetFoodPoints(donation.FoodType) * donation.Quantity
-		log.Println("foodType:", donation.FoodType)
-		log.Println("quantity:", donation.Quantity)
-		log.Println("chipAcquisition:", chipAcquisition)
 		user.Point += chipAcquisition
 		if err := db.Save(&user); err.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error.Error())
@@ -460,7 +454,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		}
 
 		go func() {
-			time.Sleep(30 * time.Minute) // wait for 30 minutes before executing the task
+			time.Sleep(30 * time.Minute)
 
 			var campaign model.Campaign
 			if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
@@ -468,7 +462,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// execute the desired task (e.g., move donation data to history table)
 			newHistory := model.History{
 				UserID:    user.ID,
 				Title:     "Donate for " + campaign.Name,
@@ -481,7 +474,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// delete the new donation data
 			if res := db.Delete(&donation); res.Error != nil {
 				utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 				return
@@ -640,7 +632,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			}
 
 			go func() {
-				time.Sleep(30 * time.Minute) // wait for 30 minutes before executing the task
+				time.Sleep(30 * time.Minute)
 
 				var campaign model.Campaign
 				if res := db.Where("id = ?", campaignID).First(&campaign); res.Error != nil {
@@ -648,7 +640,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 					return
 				}
 
-				// execute the desired task (e.g., move donation data to history table)
 				newHistory := model.History{
 					CompanyID: company.ID,
 					Title:     "Donate for " + campaign.Name,
@@ -661,7 +652,6 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 					return
 				}
 
-				// delete the new donation data
 				if res := db.Delete(&donation); res.Error != nil {
 					utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 					return

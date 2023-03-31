@@ -5,7 +5,6 @@ import (
 	"gsc/config"
 	"gsc/controller"
 	"gsc/middleware"
-	"log"
 	"net/http"
 	"os"
 
@@ -26,7 +25,6 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	log.Println(db)
 
 	// localhost
 	// databaseConf, err := config.NewDBLocal()
@@ -41,9 +39,7 @@ func main() {
 
 	r := gin.Default()
 
-	// cors
 	r.Use(middleware.CORS())
-	// controller.Init()
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

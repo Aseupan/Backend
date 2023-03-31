@@ -10,7 +10,7 @@ type User struct {
 	ID             uuid.UUID `gorm:"primaryKey" json:"id"`
 	Name           string    `gorm:"not null" json:"name"`
 	ProfilePicture string    `json:"profile_picture"`
-	Phone          string    `gorm:"unique;default:null" json:"phone"` // defaultnya null saja
+	Phone          string    `gorm:"unique;default:null" json:"phone"` // default is null
 	Email          string    `gorm:"unique;not null" json:"email"`
 	Password       string    `gorm:"not null" json:"password"`
 	Point          int       `gorm:"default:0;not null" json:"point"`
@@ -34,7 +34,7 @@ type UserUpdateProfileInput struct {
 	ProfilePicture string `json:"profile_picture"`
 	Name           string `json:"name"`
 	Email          string `json:"email"`
-	Phone          string `json:"phone"` // defaultnya null saja
+	Phone          string `json:"phone"`
 }
 type UserResetPasswordInput struct {
 	Password string `gorm:"binding:required" json:"password"`

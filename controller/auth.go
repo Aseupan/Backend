@@ -34,9 +34,14 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// Check if the email is already registered
 		var existingUser model.User
 		if err := db.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+			utils.HttpRespFailed(c, http.StatusConflict, "Email is already registered")
+			return
+		}
+
+		var existingCompany model.Company
+		if err := db.Where("company_email = ?", input.Email).First(&existingCompany).Error; err == nil {
 			utils.HttpRespFailed(c, http.StatusConflict, "Email is already registered")
 			return
 		}
@@ -77,9 +82,14 @@ func CompanyRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// Check if the email is already registered
 		var existingCompany model.Company
 		if err := db.Where("company_email = ?", input.CompanyEmail).First(&existingCompany).Error; err == nil {
+			utils.HttpRespFailed(c, http.StatusConflict, "Email is already registered")
+			return
+		}
+
+		var existingUser model.User
+		if err := db.Where("email = ?", input.CompanyEmail).First(&existingUser).Error; err == nil {
 			utils.HttpRespFailed(c, http.StatusConflict, "Email is already registered")
 			return
 		}

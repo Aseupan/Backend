@@ -4,7 +4,6 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -117,16 +116,12 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				Quantity:      1,
 			}
 
-			// handle error if company already add to cart
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ? ", companyID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
-				log.Println("sudah ada di cart")
-				// update
 				isExist.Points += credit.Points
 				isExist.Price += credit.Price
 				isExist.Quantity += 1
 				if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
-					log.Println("error update")
 					utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
 					return
 				}
@@ -156,16 +151,12 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				Quantity:      1,
 			}
 
-			// handle error if user already add to cart
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ? ", userID).Where("credit_store_id = ?", input.ID).First(&isExist).Error; err == nil {
-				log.Println("sudah ada di cart")
-				// update
 				isExist.Points += credit.Points
 				isExist.Price += credit.Price
 				isExist.Quantity += 1
 				if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", input.ID).Save(&isExist).Error; err != nil {
-					log.Println("error update")
 					utils.HttpRespFailed(c, http.StatusBadGateway, err.Error())
 					return
 				}
@@ -206,7 +197,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			}
 
 			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
-				// its not in cart yet
 				addToCart := model.CreditStoreCart{
 					CompanyID:     companyID,
 					CreditStoreID: credit.ID,
@@ -224,7 +214,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// update
 			updated.Points += credit.Points
 			updated.Price += credit.Price
 			updated.Quantity += 1
@@ -245,7 +234,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			}
 
 			if err := db.Where("credit_store_id = ?", itemID).Where("user_id = ?", userID).First(&updated).Error; err != nil {
-				// its not in cart yet
 				addToCart := model.CreditStoreCart{
 					UserID:        userID,
 					CreditStoreID: credit.ID,
@@ -267,7 +255,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			updated.Price += credit.Price
 			updated.Quantity += 1
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -314,7 +301,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			updated.Price -= credit.Price
 			updated.Quantity -= 1
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -361,7 +347,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 			updated.Price -= credit.Price
 			updated.Quantity -= 1
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -423,7 +408,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -469,7 +453,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -540,7 +523,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -586,7 +568,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			var isExist model.CreditStoreCart
 			if err := db.Where("user_id = ?", userID).Where("credit_store_id = ?", credit.ID).First(&isExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
@@ -650,7 +631,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			if err := db.Where("credit_store_id = ?", input.ID).Where("company_id = ?", companyID).First(&isItemExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
@@ -668,7 +648,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// check if exist
 			if err := db.Where("credit_store_id = ?", input.ID).Where("user_id = ?", userID).First(&isItemExist).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
@@ -686,7 +665,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 
 	// payment gateway
 	r.POST("/payment", middleware.Authorization(), func(c *gin.Context) {
-
 		var total int
 		var totalPoints int
 
@@ -711,20 +689,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
-
-			// var items []midtrans.ItemDetails
-			// for _, v := range cart {
-			// 	item := midtrans.ItemDetails{
-			// 		ID:           strconv.Itoa(v.Points),
-			// 		Price:        int64(v.Price),
-			// 		Qty:          int32(v.Quantity), // Assuming each item is purchased once
-			// 		Name:         "Points",
-			// 		Brand:        "aseupan",
-			// 		Category:     "Chips",
-			// 		MerchantName: "Midtrans",
-			// 	}
-			// 	items = append(items, item)
-			// }
 
 			for _, v := range cart {
 				total += v.Price
@@ -759,7 +723,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: company.CompanyEmail,
 						Phone: company.CompanyPhone,
 					},
-					// Items: &items,
 				}
 			} else if input.PaymentMethod == 2 {
 				req = &coreapi.ChargeReq{
@@ -776,7 +739,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: company.CompanyEmail,
 						Phone: company.CompanyPhone,
 					},
-					// Items: &items,
 				}
 			}
 
@@ -786,14 +748,12 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// update user credit
 			company.Point += totalPoints
 			if err := db.Save(&company).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
 
-			// delete cart
 			if err := db.Where("company_id = ?", companyID).Delete(&cart).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
@@ -812,7 +772,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// input into history
 			newHistory := model.History{
 				CompanyID: companyID,
 				Title:     "Buy " + strconv.Itoa(totalPoints) + " Chips",
@@ -846,21 +805,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// var items []midtrans.ItemDetails
-			// for _, v := range cart {
-			// 	item := midtrans.ItemDetails{
-			// 		ID:           strconv.Itoa(v.Points),
-			// 		Price:        int64(v.Price),
-			// 		Qty:          int32(v.Quantity), // Assuming each item is purchased once
-			// 		Name:         "Points",
-			// 		Brand:        "aseupan",
-			// 		Category:     "Chips",
-			// 		MerchantName: "Midtrans",
-			// 	}
-			// 	log.Printf("item: %v", item.Price)
-			// 	items = append(items, item)
-			// }
-
 			for _, v := range cart {
 				total += v.Price
 				totalPoints += v.Points
@@ -894,7 +838,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: user.Email,
 						Phone: user.Phone,
 					},
-					// Items: &items,
 				}
 			} else if input.PaymentMethod == 2 {
 				req = &coreapi.ChargeReq{
@@ -911,7 +854,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 						Email: user.Email,
 						Phone: user.Phone,
 					},
-					// Items: &items,
 				}
 			}
 
@@ -920,13 +862,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
 			}
-
-			// update user credit
-			// user.Point += totalPoints
-			// if err := db.Save(&user).Error; err != nil {
-			// 	utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
-			// 	return
-			// }
 
 			var tempUser model.User
 			if err := db.Where("id = ?", userID).First(&tempUser).Error; err != nil {
@@ -941,7 +876,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// delete cart
 			if err := db.Where("user_id = ?", userID).Delete(&cart).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
 				return
@@ -960,7 +894,6 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			// input into history
 			newHistory := model.History{
 				UserID:    userID,
 				Title:     "Buy " + strconv.Itoa(totalPoints) + " Chips",
