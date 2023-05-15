@@ -4,6 +4,7 @@ import (
 	"gsc/middleware"
 	"gsc/model"
 	"gsc/utils"
+	"log"
 	"net/http"
 	"os"
 
@@ -110,6 +111,10 @@ func Profile(db *gorm.DB, q *gin.Engine) {
 				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 				return
 			}
+
+			newFilename := utils.RenameLink(photo.Filename)
+			photo.Filename = newFilename
+
 			link, err := SupaBaseClient.Upload(photo)
 			if err != nil {
 				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
@@ -132,11 +137,22 @@ func Profile(db *gorm.DB, q *gin.Engine) {
 
 			photo, err := c.FormFile("pp")
 			if err != nil {
+				log.Println("disaat upload foto")
 				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 				return
 			}
+
+			log.Println("mau rename foto")
+			newFilename := utils.RenameLink(photo.Filename)
+			log.Println("bawah utils.renamelink")
+			photo.Filename = newFilename
+			log.Println("setelah rename")
+
+			log.Println("otw upload")
 			link, err := SupaBaseClient.Upload(photo)
+			log.Println("setelah upload")
 			if err != nil {
+				log.Println("disaat upload foto ke storage")
 				utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 				return
 			}
