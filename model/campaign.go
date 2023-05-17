@@ -22,6 +22,9 @@ type Campaign struct {
 	Thumbnail5  string         `json:"thumbnail_5"`
 	Urgent      int            `json:"urgent"`
 	Type        pq.StringArray `gorm:"type:text[]" json:"type"`
+	Latitude    float64        `json:"latitude"`
+	Longitude   float64        `json:"longitude"`
+	Distance    float64        `json:"distance"`
 }
 
 type CampaignInput struct {

@@ -8,11 +8,15 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/badoux/checkmail v1.2.1 // indirect
+	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/kellydunn/golang-geo v0.7.0 // indirect
+	github.com/kylelemons/go-gypsy v1.0.0 // indirect
 	github.com/lib/pq v1.10.7 // indirect
 	github.com/midtrans/midtrans-go v1.3.6 // indirect
+	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 )

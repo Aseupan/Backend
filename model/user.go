@@ -18,6 +18,11 @@ type User struct {
 	UpdatedAt      time.Time
 }
 
+type UserLocation struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 type LoginInput struct {
 	Email    string `gorm:"binding:required" json:"email"`
 	Password string `gorm:"binding:required" json:"password"`

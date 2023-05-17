@@ -66,6 +66,10 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		foodType := c.PostFormArray("type[]")
 
+		latitude := c.PostForm("latitude")
+
+		longitude := c.PostForm("longitude")
+
 		thumbnail1, _ := c.FormFile("thumbnail1")
 
 		thumbnail2, _ := c.FormFile("thumbnail2")
@@ -96,6 +100,8 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		newCampaign.EndDate = endDate
 		newCampaign.Urgent = urgent
 		newCampaign.Type = foodType
+		newCampaign.Latitude = utils.StringToFloat(latitude, c)
+		newCampaign.Longitude = utils.StringToFloat(longitude, c)
 		newCampaign.Thumbnail1 = link1
 		newCampaign.Thumbnail2 = link2
 		newCampaign.Thumbnail3 = link3
