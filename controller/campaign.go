@@ -119,10 +119,26 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// user
 	r.GET("user/all", middleware.Authorization(), func(c *gin.Context) {
+		var user model.UserLocation
+		if err := c.BindJSON(&user); err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		var campaigns []model.Campaign
 		if res := db.Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
+		}
+
+		for i := range campaigns {
+			distance := utils.LocationToKM(
+				user.Latitude,
+				user.Longitude,
+				campaigns[i].Latitude,
+				campaigns[i].Longitude,
+			)
+			campaigns[i].Distance = distance
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
@@ -130,10 +146,26 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// sort by urgent or not
 	r.GET("user/urgent", middleware.Authorization(), func(c *gin.Context) {
+		var user model.UserLocation
+		if err := c.BindJSON(&user); err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		var campaigns []model.Campaign
 		if res := db.Where("urgent = ", 1).Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
+		}
+
+		for i := range campaigns {
+			distance := utils.LocationToKM(
+				user.Latitude,
+				user.Longitude,
+				campaigns[i].Latitude,
+				campaigns[i].Longitude,
+			)
+			campaigns[i].Distance = distance
 		}
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
@@ -141,22 +173,46 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// sort by newest
 	r.GET("user/newest", middleware.Authorization(), func(c *gin.Context) {
+		var user model.UserLocation
+		if err := c.BindJSON(&user); err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		var campaigns []model.Campaign
 		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
 		}
 
+		for i := range campaigns {
+			distance := utils.LocationToKM(
+				user.Latitude,
+				user.Longitude,
+				campaigns[i].Latitude,
+				campaigns[i].Longitude,
+			)
+			campaigns[i].Distance = distance
+		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
 	})
 
 	r.GET("user/detail/:id", middleware.Authorization(), func(c *gin.Context) {
 		id := c.Param("id")
+		var user model.UserLocation
+		if err := c.BindJSON(&user); err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+			return
+		}
 
 		var campaign model.Campaign
 		if res := db.Where("id = ?", id).First(&campaign); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
 		}
+
+		campaign.Distance = utils.LocationToKM(user.Latitude, user.Longitude, campaign.Latitude, campaign.Longitude)
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaign)
 	})
