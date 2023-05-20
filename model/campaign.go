@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -25,6 +27,7 @@ type Campaign struct {
 	Latitude    float64        `json:"latitude"`
 	Longitude   float64        `json:"longitude"`
 	Distance    float64        `json:"distance"`
+	CreatedAt   time.Time      `json:"created_at"`
 }
 
 type CampaignInput struct {

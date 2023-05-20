@@ -6,6 +6,7 @@ import (
 	"gsc/utils"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -108,6 +109,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		newCampaign.Thumbnail3 = link3
 		newCampaign.Thumbnail4 = link4
 		newCampaign.Thumbnail5 = link5
+		newCampaign.CreatedAt = time.Now()
 
 		if res := db.Create(&newCampaign); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
@@ -171,7 +173,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		}
 
 		var campaigns []model.Campaign
-		if res := db.Where("urgent = ", 1).Find(&campaigns); res.Error != nil {
+		if res := db.Where("urgent = ?", 1).Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
 			return
 		}
@@ -189,8 +191,8 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
 	})
 
-	// sort by newest
-	r.GET("user/newest", middleware.Authorization(), func(c *gin.Context) {
+	// sort by latest
+	r.GET("user/latest", middleware.Authorization(), func(c *gin.Context) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
@@ -221,6 +223,86 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			)
 			campaigns[i].Distance = distance
 		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
+	})
+
+	// sort by farthest
+	r.GET("user/farthest", middleware.Authorization(), func(c *gin.Context) {
+		latitudeStr := c.Query("latitude")
+		longitudeStr := c.Query("longitude")
+
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+			return
+		}
+
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+			return
+		}
+
+		var campaigns []model.Campaign
+		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+			return
+		}
+
+		for i := range campaigns {
+			distance := utils.LocationToKM(
+				latitude,
+				longitude,
+				campaigns[i].Latitude,
+				campaigns[i].Longitude,
+			)
+			campaigns[i].Distance = distance
+		}
+
+		sort.Slice(campaigns, func(i, j int) bool {
+			return campaigns[i].Distance < campaigns[j].Distance
+		})
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
+	})
+
+	// sort by nearest
+	r.GET("user/nearest", middleware.Authorization(), func(c *gin.Context) {
+		latitudeStr := c.Query("latitude")
+		longitudeStr := c.Query("longitude")
+
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+			return
+		}
+
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+			return
+		}
+
+		var campaigns []model.Campaign
+		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
+			return
+		}
+
+		for i := range campaigns {
+			distance := utils.LocationToKM(
+				latitude,
+				longitude,
+				campaigns[i].Latitude,
+				campaigns[i].Longitude,
+			)
+			campaigns[i].Distance = distance
+		}
+
+		sort.Slice(campaigns, func(i, j int) bool {
+			return campaigns[i].Distance > campaigns[j].Distance
+		})
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaigns)
 	})
