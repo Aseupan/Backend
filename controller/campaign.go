@@ -6,6 +6,7 @@ import (
 	"gsc/utils"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	supabasestorageuploader "github.com/adityarizkyramadhan/supabase-storage-uploader"
@@ -119,12 +120,20 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// user
 	r.GET("user/all", middleware.Authorization(), func(c *gin.Context) {
-		var user model.UserLocation
-		if err := c.BindJSON(&user); err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+		latitudeStr := c.Query("latitude")
+		longitudeStr := c.Query("longitude")
+
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
 			return
 		}
 
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+			return
+		}
 		var campaigns []model.Campaign
 		if res := db.Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
@@ -133,8 +142,8 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				user.Latitude,
-				user.Longitude,
+				latitude,
+				longitude,
 				campaigns[i].Latitude,
 				campaigns[i].Longitude,
 			)
@@ -146,9 +155,18 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// sort by urgent or not
 	r.GET("user/urgent", middleware.Authorization(), func(c *gin.Context) {
-		var user model.UserLocation
-		if err := c.BindJSON(&user); err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+		latitudeStr := c.Query("latitude")
+		longitudeStr := c.Query("longitude")
+
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+			return
+		}
+
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
 			return
 		}
 
@@ -160,8 +178,8 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				user.Latitude,
-				user.Longitude,
+				latitude,
+				longitude,
 				campaigns[i].Latitude,
 				campaigns[i].Longitude,
 			)
@@ -173,9 +191,18 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	// sort by newest
 	r.GET("user/newest", middleware.Authorization(), func(c *gin.Context) {
-		var user model.UserLocation
-		if err := c.BindJSON(&user); err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+		latitudeStr := c.Query("latitude")
+		longitudeStr := c.Query("longitude")
+
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+			return
+		}
+
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
 			return
 		}
 
@@ -187,8 +214,8 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				user.Latitude,
-				user.Longitude,
+				latitude,
+				longitude,
 				campaigns[i].Latitude,
 				campaigns[i].Longitude,
 			)
@@ -200,9 +227,18 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 	r.GET("user/detail/:id", middleware.Authorization(), func(c *gin.Context) {
 		id := c.Param("id")
-		var user model.UserLocation
-		if err := c.BindJSON(&user); err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, err.Error())
+		latitudeStr := c.Query("latitude")
+		longitudeStr := c.Query("longitude")
+
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+			return
+		}
+
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
 			return
 		}
 
@@ -212,7 +248,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		campaign.Distance = utils.LocationToKM(user.Latitude, user.Longitude, campaign.Latitude, campaign.Longitude)
+		campaign.Distance = utils.LocationToKM(latitude, longitude, campaign.Latitude, campaign.Longitude)
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaign)
 	})

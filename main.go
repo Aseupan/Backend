@@ -5,16 +5,18 @@ import (
 	"gsc/config"
 	"gsc/controller"
 	"gsc/middleware"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal(err.Error())
-	// }
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	// supabase
 	databaseConf, err := config.NewDatabase()
