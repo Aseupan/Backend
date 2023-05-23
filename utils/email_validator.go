@@ -4,6 +4,6 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
-func ValidateEmail(email string) bool {
+func IsEmailValid(email string) bool {
 	return govalidator.IsEmail(email)
 }

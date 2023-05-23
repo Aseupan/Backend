@@ -29,8 +29,13 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if !utils.ValidateEmail(input.Email) {
+		if !utils.IsEmailValid(input.Email) {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
+			return
+		}
+
+		if !utils.IsPasswordValid(input.Password) {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Password is not valid")
 			return
 		}
 
@@ -77,8 +82,13 @@ func CompanyRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if !utils.ValidateEmail(input.CompanyEmail) {
+		if !utils.IsEmailValid(input.CompanyEmail) {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Email is not valid")
+			return
+		}
+
+		if !utils.IsPasswordValid(input.Password) {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Password is not valid")
 			return
 		}
 
