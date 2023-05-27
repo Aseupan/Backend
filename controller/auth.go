@@ -137,13 +137,13 @@ func Login(db *gorm.DB, q *gin.Engine) {
 
 		var company model.Company
 		if err := db.Where("company_email = ?", input.Email).First(&company).Error; err != nil {
-			utils.HttpRespFailed(c, http.StatusNotFound, "Email is not registered")
-			return
+			// utils.HttpRespFailed(c, http.StatusNotFound, "Email is not registered")
+			// return
 		}
 
 		var accountType string
 
-		if user.ID != uuid.Nil && !utils.CompareHash(input.Password, user.Password) {
+		if user.ID != uuid.Nil && utils.CompareHash(input.Password, user.Password) {
 			accountType = "user"
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 				"id":   user.ID,
@@ -440,15 +440,6 @@ func ResetPassword(db *gorm.DB, q *gin.Engine) {
 			utils.HttpRespFailed(c, http.StatusNotFound, "Account that's associated with this email is not found")
 			return
 		}
-
-		// resetPassword := model.ResetPassword{
-		// 	ID:        uuid.New(),
-		// 	UserID:    user.ID,
-		// 	Email:     user.Email,
-		// 	Code:      code,
-		// 	IsUsed:    false,
-		// 	CreatedAt: time.Now(),
-		// }
 
 		var resetPassword model.ResetPassword
 
