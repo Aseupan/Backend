@@ -125,17 +125,18 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
-			return
-		}
+		// latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+		// 	return
+		// }
 
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
-			return
-		}
+		// longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+		// 	return
+		// }
+
 		var campaigns []model.Campaign
 		if res := db.Find(&campaigns); res.Error != nil {
 			utils.HttpRespFailed(c, http.StatusInternalServerError, res.Error.Error())
@@ -144,10 +145,11 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				latitude,
-				longitude,
-				campaigns[i].Latitude,
-				campaigns[i].Longitude,
+				c,
+				latitudeStr,
+				longitudeStr,
+				strconv.FormatFloat(campaigns[i].Latitude, 'f', -1, 64),
+				strconv.FormatFloat(campaigns[i].Longitude, 'f', -1, 64),
 			)
 			campaigns[i].Distance = distance
 		}
@@ -160,17 +162,17 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
-			return
-		}
+		// latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+		// 	return
+		// }
 
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
-			return
-		}
+		// longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+		// 	return
+		// }
 
 		var campaigns []model.Campaign
 		if res := db.Where("urgent = ?", 1).Find(&campaigns); res.Error != nil {
@@ -180,10 +182,11 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				latitude,
-				longitude,
-				campaigns[i].Latitude,
-				campaigns[i].Longitude,
+				c,
+				latitudeStr,
+				longitudeStr,
+				strconv.FormatFloat(campaigns[i].Latitude, 'f', -1, 64),
+				strconv.FormatFloat(campaigns[i].Longitude, 'f', -1, 64),
 			)
 			campaigns[i].Distance = distance
 		}
@@ -196,17 +199,17 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
-			return
-		}
+		// latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+		// 	return
+		// }
 
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
-			return
-		}
+		// longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+		// 	return
+		// }
 
 		var campaigns []model.Campaign
 		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
@@ -216,10 +219,11 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				latitude,
-				longitude,
-				campaigns[i].Latitude,
-				campaigns[i].Longitude,
+				c,
+				latitudeStr,
+				longitudeStr,
+				strconv.FormatFloat(campaigns[i].Latitude, 'f', -1, 64),
+				strconv.FormatFloat(campaigns[i].Longitude, 'f', -1, 64),
 			)
 			campaigns[i].Distance = distance
 		}
@@ -232,17 +236,17 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
-			return
-		}
+		// latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+		// 	return
+		// }
 
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
-			return
-		}
+		// longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+		// 	return
+		// }
 
 		var campaigns []model.Campaign
 		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
@@ -252,10 +256,11 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				latitude,
-				longitude,
-				campaigns[i].Latitude,
-				campaigns[i].Longitude,
+				c,
+				latitudeStr,
+				longitudeStr,
+				strconv.FormatFloat(campaigns[i].Latitude, 'f', -1, 64),
+				strconv.FormatFloat(campaigns[i].Longitude, 'f', -1, 64),
 			)
 			campaigns[i].Distance = distance
 		}
@@ -272,17 +277,17 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
-			return
-		}
+		// latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+		// 	return
+		// }
 
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
-			return
-		}
+		// longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+		// 	return
+		// }
 
 		var campaigns []model.Campaign
 		if res := db.Order("created_at desc").Find(&campaigns); res.Error != nil {
@@ -292,10 +297,11 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 
 		for i := range campaigns {
 			distance := utils.LocationToKM(
-				latitude,
-				longitude,
-				campaigns[i].Latitude,
-				campaigns[i].Longitude,
+				c,
+				latitudeStr,
+				longitudeStr,
+				strconv.FormatFloat(campaigns[i].Latitude, 'f', -1, 64),
+				strconv.FormatFloat(campaigns[i].Longitude, 'f', -1, 64),
 			)
 			campaigns[i].Distance = distance
 		}
@@ -312,17 +318,17 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 		latitudeStr := c.Query("latitude")
 		longitudeStr := c.Query("longitude")
 
-		latitude, err := strconv.ParseFloat(latitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
-			return
-		}
+		// latitude, err := strconv.ParseFloat(latitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid latitude")
+		// 	return
+		// }
 
-		longitude, err := strconv.ParseFloat(longitudeStr, 64)
-		if err != nil {
-			utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
-			return
-		}
+		// longitude, err := strconv.ParseFloat(longitudeStr, 64)
+		// if err != nil {
+		// 	utils.HttpRespFailed(c, http.StatusBadRequest, "Invalid longitude")
+		// 	return
+		// }
 
 		var campaign model.Campaign
 		if res := db.Where("id = ?", id).First(&campaign); res.Error != nil {
@@ -330,7 +336,7 @@ func Campaign(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		campaign.Distance = utils.LocationToKM(latitude, longitude, campaign.Latitude, campaign.Longitude)
+		campaign.Distance = utils.LocationToKM(c, latitudeStr, longitudeStr, strconv.FormatFloat(campaign.Latitude, 'f', -1, 64), strconv.FormatFloat(campaign.Longitude, 'f', -1, 64))
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Campaign", campaign)
 	})

@@ -26,7 +26,7 @@ type Campaign struct {
 	Type        pq.StringArray `gorm:"type:text[]" json:"type"`
 	Latitude    float64        `json:"latitude"`
 	Longitude   float64        `json:"longitude"`
-	Distance    float64        `json:"distance"`
+	Distance    string         `json:"distance"`
 	CreatedAt   time.Time      `json:"created_at"`
 }
 

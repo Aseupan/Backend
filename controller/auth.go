@@ -137,12 +137,13 @@ func Login(db *gorm.DB, q *gin.Engine) {
 
 		var company model.Company
 		if err := db.Where("company_email = ?", input.Email).First(&company).Error; err != nil {
-			// utils.HttpRespFailed(c, http.StatusNotFound, "Company not found")
+			utils.HttpRespFailed(c, http.StatusNotFound, "Email is not registered")
+			return
 		}
 
 		var accountType string
 
-		if user.ID != uuid.Nil && utils.CompareHash(input.Password, user.Password) {
+		if user.ID != uuid.Nil && !utils.CompareHash(input.Password, user.Password) {
 			accountType = "user"
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 				"id":   user.ID,
@@ -187,13 +188,126 @@ func Login(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 	})
+}
 
+func LoginOTP(db *gorm.DB, q *gin.Engine) {
+	r := q.Group("/api")
+
+	r.POST("/login-otp", func(c *gin.Context) {
+		var input model.ForgotPasswordLogin
+		if err := c.BindJSON(&input); err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		var user model.User
+		if err := db.Where("email = ?", input.Email).First(&user).Error; err != nil {
+			// utils.HttpRespFailed(c, http.StatusNotFound, "User not found")
+		}
+
+		var company model.Company
+		if err := db.Where("company_email = ?", input.Email).First(&company).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, "Email is not registered")
+			return
+		}
+
+		var accountType string
+
+		if user.ID != uuid.Nil {
+			var userResetPassword model.ResetPassword
+			if err := db.Where("email = ?", input.Email).First(&userResetPassword).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Email is not registered")
+				return
+			}
+
+			if userResetPassword.IsUsed {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Code is already used")
+				return
+			}
+
+			if userResetPassword.Code != input.Code {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Code is not valid")
+				return
+			}
+
+			userResetPassword.IsUsed = true
+			if err := db.Save(&userResetPassword).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			accountType = "user"
+			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+				"id":   user.ID,
+				"type": accountType,
+				"exp":  time.Now().Add(time.Hour).Unix(),
+			})
+
+			strToken, err := token.SignedString([]byte(os.Getenv("TOKEN")))
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Parsed token", gin.H{
+				"name":  user.Name,
+				"token": strToken,
+				"type":  accountType,
+			})
+
+		} else if company.ID != uuid.Nil {
+			var userResetPassword model.ResetPassword
+			if err := db.Where("email = ?", input.Email).First(&userResetPassword).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Email is not registered")
+				return
+			}
+
+			if userResetPassword.IsUsed {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Code is already used")
+				return
+			}
+
+			if userResetPassword.Code != input.Code {
+				utils.HttpRespFailed(c, http.StatusNotFound, "Code is not valid")
+				return
+			}
+
+			userResetPassword.IsUsed = true
+			if err := db.Save(&userResetPassword).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			accountType = "company"
+			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+				"id":   company.ID,
+				"type": accountType,
+				"exp":  time.Now().Add(time.Hour).Unix(),
+			})
+
+			strToken, err := token.SignedString([]byte(os.Getenv("TOKEN")))
+			if err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+			utils.HttpRespSuccess(c, http.StatusOK, "Parsed token", gin.H{
+				"name":  company.CompanyName,
+				"token": strToken,
+				"type":  accountType,
+			})
+
+		} else {
+			utils.HttpRespFailed(c, http.StatusForbidden, "Wrong email or password")
+			return
+		}
+	})
 }
 
 func ResetPassword(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
-	r.POST("/reset-password", middleware.Authorization(), func(c *gin.Context) {
+	r.POST("/change-password", middleware.Authorization(), func(c *gin.Context) {
 		var input model.UserResetPasswordInput
 		if err := c.BindJSON(&input); err != nil {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
@@ -231,6 +345,154 @@ func ResetPassword(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 		}
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Password reset", nil)
+	})
+
+	r.POST("/send-code", func(c *gin.Context) {
+		var input model.ForgotPasswordEmailInput
+		if err := c.BindJSON(&input); err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		code := utils.GenerateRandomCode()
+
+		var user model.User
+		if err := db.Where("email = ?", input.Email).First(&user).Error; err != nil {
+			// utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+		}
+
+		var company model.Company
+		if err := db.Where("company_email = ?", input.Email).First(&company).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, "Account that's associated with this email is not found")
+			return
+		}
+
+		var resetPassword model.ResetPassword
+
+		if user.ID != uuid.Nil {
+			resetPassword = model.ResetPassword{
+				ID:        uuid.New(),
+				UserID:    user.ID,
+				Email:     user.Email,
+				Code:      code,
+				IsUsed:    false,
+				CreatedAt: time.Now(),
+			}
+		} else if company.ID != uuid.Nil {
+			resetPassword = model.ResetPassword{
+				ID:        uuid.New(),
+				CompanyID: company.ID,
+				Email:     company.CompanyEmail,
+				Code:      code,
+				IsUsed:    false,
+				CreatedAt: time.Now(),
+			}
+		}
+
+		if err := db.Exec("DELETE FROM reset_passwords WHERE email = ?", input.Email).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		if err := db.Create(&resetPassword).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		err := utils.SendCodeToEmail(input.Email, code)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// set timer
+		go func() {
+			time.Sleep(10 * time.Minute)
+
+			if err := db.Delete(&resetPassword).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+		}()
+
+		utils.HttpRespSuccess(c, http.StatusOK, "Code re-sent", nil)
+	})
+
+	r.POST("/forgot-password", func(c *gin.Context) {
+		var input model.ForgotPasswordEmailInput
+		if err := c.BindJSON(&input); err != nil {
+			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		code := utils.GenerateRandomCode()
+
+		var user model.User
+		if err := db.Where("email = ?", input.Email).First(&user).Error; err != nil {
+			// utils.HttpRespFailed(c, http.StatusNotFound, err.Error())
+		}
+
+		var company model.Company
+		if err := db.Where("company_email = ?", input.Email).First(&company).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusNotFound, "Account that's associated with this email is not found")
+			return
+		}
+
+		// resetPassword := model.ResetPassword{
+		// 	ID:        uuid.New(),
+		// 	UserID:    user.ID,
+		// 	Email:     user.Email,
+		// 	Code:      code,
+		// 	IsUsed:    false,
+		// 	CreatedAt: time.Now(),
+		// }
+
+		var resetPassword model.ResetPassword
+
+		if user.ID != uuid.Nil {
+			resetPassword = model.ResetPassword{
+				ID:        uuid.New(),
+				UserID:    user.ID,
+				Email:     user.Email,
+				Code:      code,
+				IsUsed:    false,
+				CreatedAt: time.Now(),
+			}
+		} else if company.ID != uuid.Nil {
+			resetPassword = model.ResetPassword{
+				ID:        uuid.New(),
+				CompanyID: company.ID,
+				Email:     company.CompanyEmail,
+				Code:      code,
+				IsUsed:    false,
+				CreatedAt: time.Now(),
+			}
+		}
+
+		if err := db.Create(&resetPassword).Error; err != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		err := utils.SendCodeToEmail(input.Email, code)
+		if err != nil {
+			utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// set timer
+		go func() {
+			time.Sleep(10 * time.Minute)
+
+			if err := db.Delete(&resetPassword).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+
+		}()
 
 		utils.HttpRespSuccess(c, http.StatusOK, "Password reset", nil)
 	})

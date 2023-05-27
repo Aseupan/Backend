@@ -1,21 +1,51 @@
 package utils
 
 import (
+	"encoding/json"
+	"fmt"
+	"gsc/model"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	geo "github.com/kellydunn/golang-geo"
 )
 
-func LocationToKM(userLatitude float64, userLongitude float64, campaignLatitude float64, campaignLongitude float64) float64 {
-	user := geo.NewPoint(userLatitude, userLongitude)
+func LocationToKM(c *gin.Context, userLatitude, userLongitude, campaignLatitude, campaignLongitude string) string {
+	baseURL := "https://maps.googleapis.com/maps/api/distancematrix/json?"
+	params := url.Values{}
+	params.Set("origins", userLatitude+","+userLongitude)
+	params.Set("destinations", campaignLatitude+","+campaignLongitude)
+	params.Set("mode", "driving")
+	params.Set("key", os.Getenv("GOOGLE_API_KEY"))
 
-	campaign := geo.NewPoint(campaignLatitude, campaignLongitude)
+	requestURL := baseURL + params.Encode()
 
-	distance := user.GreatCircleDistance(campaign)
+	resp, err := http.Get(requestURL)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return "0"
+	}
+	defer resp.Body.Close()
 
-	return distance
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return "0"
+	}
+
+	var distanceMatrixResponse model.DistanceMatrixResponse
+	err = json.Unmarshal(body, &distanceMatrixResponse)
+	if err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return "0"
+	}
+
+	distanceStr := distanceMatrixResponse.Rows[0].Elements[0].Distance.Text
+
+	return distanceStr
 }
 
 func StringToInteger(input string, c *gin.Context) int {
