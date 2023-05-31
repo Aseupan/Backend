@@ -409,7 +409,7 @@ func ResetPassword(db *gorm.DB, q *gin.Engine) {
 
 		// set timer
 		go func() {
-			time.Sleep(10 * time.Minute)
+			time.Sleep(2 * time.Minute)
 
 			if err := db.Delete(&resetPassword).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
@@ -426,6 +426,22 @@ func ResetPassword(db *gorm.DB, q *gin.Engine) {
 		if err := c.BindJSON(&input); err != nil {
 			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, err.Error())
 			return
+		}
+
+		// search if it's already exist
+		var isExist bool
+		var searchRow model.ResetPassword
+		if err := db.Where("email = ?", input.Email).First(&searchRow).Error; err != nil {
+			isExist = false
+		} else {
+			isExist = true
+		}
+
+		if isExist {
+			if err := db.Exec("DELETE FROM reset_passwords WHERE email = ?", input.Email).Error; err != nil {
+				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 
 		code := utils.GenerateRandomCode()
@@ -476,7 +492,7 @@ func ResetPassword(db *gorm.DB, q *gin.Engine) {
 
 		// set timer
 		go func() {
-			time.Sleep(10 * time.Minute)
+			time.Sleep(2 * time.Minute)
 
 			if err := db.Delete(&resetPassword).Error; err != nil {
 				utils.HttpRespFailed(c, http.StatusInternalServerError, err.Error())
