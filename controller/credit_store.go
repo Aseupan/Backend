@@ -196,7 +196,7 @@ func CreditStore(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			if err := db.Where("credit_store_id = ?", itemID).Where("company_id = ?", companyID).First(&updated).Error; err != nil {
+			if err := db.Where("company_id = ?", companyID).Where("credit_store_id = ?", itemID).First(&updated).Error; err != nil {
 				addToCart := model.CreditStoreCart{
 					CompanyID:     companyID,
 					CreditStoreID: credit.ID,

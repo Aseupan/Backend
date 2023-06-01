@@ -34,10 +34,10 @@ func UserRegister(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if !utils.IsPasswordValid(input.Password) {
-			utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Password is not valid")
-			return
-		}
+		// if !utils.IsPasswordValid(input.Password) {
+		// 	utils.HttpRespFailed(c, http.StatusUnprocessableEntity, "Password is not valid")
+		// 	return
+		// }
 
 		var existingUser model.User
 		if err := db.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {

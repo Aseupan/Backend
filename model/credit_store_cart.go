@@ -3,6 +3,7 @@ package model
 import "github.com/google/uuid"
 
 type CreditStoreCart struct {
+	// jika tidak dipakai, maka hapus User User, agar tidak menggunakan foreign key
 	User          User      `gorm:"ForeignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	UserID        uuid.UUID `gorm:"null" json:"user_id"`
 	CompanyID     uuid.UUID `gorm:"null" json:"company_id"`
